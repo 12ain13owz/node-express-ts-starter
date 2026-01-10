@@ -28,7 +28,7 @@ This is a boilerplate template for building a scalable REST API using **Node.js*
 
    ```bash
    git clone <repository-url>
-   cd nodejs-template
+   cd node-express-ts-starter
    ```
 
 2. **Install dependencies**:
@@ -103,13 +103,13 @@ This uses `tsx` to watch and run TypeScript files directly.
 1. Build the Docker image:
 
    ```bash
-   docker build -t nodejs-template .
+   docker build -t node-express-ts-starter .
    ```
 
 2. Run the container:
 
    ```bash
-   docker run -d -p 3000:3000 --name nodejs-dev nodejs-template
+   docker run -d -p 3000:3000 --name nodejs-dev node-express-ts-starter
    ```
 
 The server will be available at `http://localhost:3000` (or the port specified in `.env.development`).
@@ -160,7 +160,7 @@ The ESLint configuration (`eslint.config.mjs`) includes:
 ## Project Structure
 
 ```
-nodejs-template/
+node-express-ts-starter/
 ├── docs/                                 # API documentation files
 ├── src/                                  # Source code (TypeScript)
 │   ├── config/                           # Configuration files

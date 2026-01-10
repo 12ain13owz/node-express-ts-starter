@@ -1,7 +1,7 @@
 import { Request } from 'express'
 
-import { HttpStatus } from '@/const/systems/http-status.const'
-import { ErrorSeverity } from '@/const/utils/logger.const'
+import { HttpStatus } from '@/const/http-status.const'
+import { ErrorSeverity } from '@/const/logger.const'
 import { EndpointContext, ErrorContext } from '@/types/error.type'
 
 import { logger } from './logger.utils'

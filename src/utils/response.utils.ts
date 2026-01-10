@@ -1,6 +1,6 @@
 import { HelmetOptions } from 'helmet'
 
-import { AppResponse } from '@/types/generic.type'
+import { AppResponse } from '@/types/app.type'
 
 export const createResponse = <T>(message: string, data?: T): AppResponse<T> => {
   return {

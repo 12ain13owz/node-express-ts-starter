@@ -1,5 +1,5 @@
-export const APP_NAME = 'NodeJS Template'
+export const APP_NAME = 'Node Starter'
 
-export const GENERIC = {
+export const APP_GENERIC = {
   serverListening: (baseUrl: string, port: number) => `Server listening at ${baseUrl}${port}`,
 }

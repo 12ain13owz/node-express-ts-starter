@@ -3,8 +3,10 @@ import { existsSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { createLogger, format, transports } from 'winston'
 
-import { config } from '@/config'
-import { AnsiColors, LOG_LEVEL_COLORS, LOG_LEVELS, DisplayLevel } from '@/const/utils/logger.const'
+import { getEnv } from '@/config'
+import { AnsiColors, LOG_LEVEL_COLORS, LOG_LEVELS, DisplayLevel } from '@/const/logger.const'
+
+const env = getEnv()
 
 // # ==================== File Transport Utilities ====================
 
@@ -239,21 +241,21 @@ export const logger = createLogger({
     // * Console transport with colors
     new transports.Console({
       format: customLogFormat,
-      level: config.logLevel.console,
+      level: env.LOG_LEVEL_CONSOLE,
     }),
 
     // * File transport for info logs
     new transports.File({
       filename: getLogFilePath(),
       format: fileLogFormat,
-      level: config.logLevel.file,
+      level: env.LOG_LEVEL_FILE,
     }),
 
     // ! File transport for error logs only
     new transports.File({
       filename: getLogFilePath('error'),
       format: fileLogFormat,
-      level: config.logLevel.errorFile,
+      level: env.LOG_LEVEL_ERROR_FILE,
     }),
   ],
 })

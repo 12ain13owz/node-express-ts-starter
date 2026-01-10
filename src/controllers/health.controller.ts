@@ -1,10 +1,10 @@
 import { NextFunction, Request, Response } from 'express'
 
-import { HttpStatus } from '@/const/systems/http-status.const'
-import { SUCCESS } from '@/const/systems/success.const'
-import { ErrorSeverity } from '@/const/utils/logger.const'
+import { HttpStatus } from '@/const/http-status.const'
+import { ErrorSeverity } from '@/const/logger.const'
+import { SUCCESS } from '@/const/message.const'
 import { AppError } from '@/utils/error-handling.utils'
-import { createResponse } from '@/utils/generic.utils'
+import { createResponse } from '@/utils/response.utils'
 
 export const successController = async (
   _req: Request,
