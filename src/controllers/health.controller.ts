@@ -25,7 +25,7 @@ export const errorController = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    throw new AppError('Test error function', HttpStatus.BAD_REQUEST, ErrorSeverity.INFO)
+    throw new AppError('Test error function', HttpStatus.BAD_REQUEST, ErrorSeverity.ERROR)
       .addOperationName('errorController')
       .addEndpointContext(req)
       .addAdditionalData({

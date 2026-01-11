@@ -202,21 +202,23 @@ const customLogFormat = format.printf((info) => {
 })
 
 /**
- * File format without colors (plain text)
- * Format: [timestamp] LEVEL message
+ * File format: JSON single line (Best for Log Parsers)
  */
-const fileLogFormat = format.printf((info) => {
-  const timestamp = `[${dayjs().format('YYYY-MM-DD HH:mm:ss.SSS')}]`
-  const level = info.level.toUpperCase().padEnd(7)
+const fileLogFormat = format.combine(
+  format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
+  format.printf((info) => {
+    const logEntry = {
+      timestamp: info.timestamp,
+      level: info.level.toUpperCase(),
+      message: info.message,
+      // ถ้ามี metadata อื่นๆ จาก winston ให้รวมเข้าไปด้วย
+      ...(typeof info.metadata === 'object' ? info.metadata : {}),
+    }
 
-  // ? Convert message to plain string without colors
-  let message = ''
-  if (Array.isArray(info.message)) message = JSON.stringify(info.message, null, 2)
-  else if (typeof info.message === 'object') message = JSON.stringify(info.message, null, 2)
-  else message = String(info.message as unknown)
-
-  return `${timestamp} ${level} ${message}`
-})
+    // ใช้ JSON.stringify แบบไม่มี space (บรรทัดเดียว)
+    return JSON.stringify(logEntry)
+  })
+)
 
 // # ==================== Logger Instance ====================
 

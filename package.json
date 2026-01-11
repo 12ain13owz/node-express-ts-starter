@@ -5,7 +5,7 @@
   "main": "main.ts",
   "scripts": {
     "start": "node --env-file=.env.production dist/main.js",
-    "dev": " tsx watch --env-file=.env.development  src/main",
+    "dev": "tsx --watch --env-file=.env.development src/main.ts",
     "clean": "rimraf dist",
     "build": "npm run clean && tsc && tsc-alias",
     "setup-env": "node scripts/setup-env.mjs",
