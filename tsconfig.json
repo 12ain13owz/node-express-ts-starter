@@ -1,55 +1,41 @@
 {
   "compilerOptions": {
-    // Target และ Module settings
-    "target": "ES2022", // Compile ให้อยู่ในรูปแบบ ECMAScript 2022
-    "module": "nodenext", //   รองรับทั้ง ESM และ CommonJS
-    "moduleResolution": "nodenext", // ใช้วิธีการ resolve modules แบบใหม่ของ Node.js
+    /* Target & Module System */
+    "target": "ES2022",
+    "module": "NodeNext", // Use modern Node.js ESM standards
+    "moduleResolution": "NodeNext", // Resolve modules using Node.js logic
+    "lib": ["ES2022"], // Set standard library APIs
 
-    // Path และ Root settings
-    "rootDir": "./src", // ระบุ directory ต้นทางของ source code
-    "outDir": "./dist", // ระบุ directory ปลายทางสำหรับไฟล์ที่ compile แล้ว
-    "baseUrl": "src", // กำหนดจุดเริ่มต้นสำหรับ module resolution
-    "paths": { "@/*": ["*"] }, // กำหนด alias (@/) เพื่อให้ import โค้ดจาก src
+    /* Path Mapping */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"] // Map @/ alias to src directory
+    },
+    "rootDir": "src", // Source file location
+    "outDir": "dist", // Compiled output location
 
-    // Strict Type-Checking
-    "strict": true, // เปิดใช้งาน strict type-checking ทั้งหมด
-    "noImplicitAny": true, // ห้ามใช้ type any โดยไม่ระบุชัดเจน
-    "strictNullChecks": true, // ตรวจสอบ null และ undefined อย่างเข้มงวด
-    "strictFunctionTypes": true, // ตรวจสอบ function types อย่างเข้มงวด
-    "alwaysStrict": true, // เพิ่ม "use strict"; ในไฟล์ JavaScript ที่คอมไพล์แล้ว
+    /* Strictness */
+    "strict": true, // Enable all strict type-checking options
+    "noImplicitAny": true, // Disallow inferred 'any' types
+    "strictNullChecks": true, // Force explicit null/undefined handling
+    "strictFunctionTypes": true, // Enforce stronger function type checks
+    "noUnusedLocals": true, // Error on unused local variables
+    "noUnusedParameters": true, // Error on unused function parameters
+    "noImplicitReturns": true, // Ensure all code paths return a value
+    "noFallthroughCasesInSwitch": true, // Prevent switch-case fallthrough errors
 
-    // Additional Checks
-    "noUnusedLocals": true, // แจ้งเตือนเมื่อมีตัวแปร local ที่ไม่ได้ใช้
-    "noUnusedParameters": true, // แจ้งเตือนเมื่อมี parameters ที่ไม่ได้ใช้
-    "noImplicitReturns": true, // ต้องมี return ในทุก code path
-    "noFallthroughCasesInSwitch": true, // ตรวจสอบ switch cases ที่ไม่มี break
+    /* Interop & Helpers */
+    "esModuleInterop": true, // Smooth import of CommonJS modules
+    "forceConsistentCasingInFileNames": true, // Ensure case-sensitive file naming
+    "skipLibCheck": true, // Speed up build by skipping declaration checks
+    "resolveJsonModule": true, // Allow importing .json files
+    "removeComments": true, // Strip comments from output files
 
-    // Module Resolution
-    "esModuleInterop": true, // ช่วยให้ import CommonJS modules ได้เหมือน ES modules
-    "resolveJsonModule": true, // อนุญาตให้ import JSON files
-    "allowJs": false, // อนุญาตให้ compile JavaScript files
-    "checkJs": false, // ตรวจสอบ type ใน JavaScript files
-
-    // Emit Settings
-    "declaration": false, // สร้างไฟล์ .d.ts
-    "sourceMap": false, // สร้าง source maps สำหรับ debugging
-    "removeComments": true, // เก็บ comments ไว้ในไฟล์ที่ compile แล้ว
-
-    // Advanced Settings
-    "forceConsistentCasingInFileNames": true, // ตรวจสอบความถูกต้องของชื่อไฟล์
-    "skipLibCheck": true, // ข้ามการตรวจสอบ type ในไฟล์ .d.ts ของ dependencies
-
-    // Experimental Features
-    "experimentalDecorators": true, // เปิดใช้งาน decorators
-    "emitDecoratorMetadata": true // emit metadata สำหรับ decorators
+    /* Advanced */
+    "declaration": false, // Skip generating .d.ts files
+    "sourceMap": true, // Enable sourcemaps for better debugging
+    "isolatedModules": true // Ensure compatibility with tsx/esbuild
   },
-  "include": [
-    "src/**/*.ts" // รวมไฟล์ทั้งหมดใน src directory
-  ],
-  "exclude": [
-    "node_modules", // ไม่รวม node_modules
-    "**/*.spec.ts", // ไม่รวมไฟล์ test ที่มีนามสกุล .spec.ts
-    "**/*.test.ts", // ไม่รวมไฟล์ test ที่มีนามสกุล .test.ts
-    "dist" // ไม่รวมไฟล์ที่ compile แล้ว
-  ]
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
 }

@@ -1,7 +1,7 @@
 {
   "name": "node-starter",
   "version": "1.0.0",
-  "description": "",
+  "description": "A modern Node.js Starter with Express, TypeScript, and ESM",
   "main": "main.ts",
   "scripts": {
     "start": "node --env-file=.env.production dist/main.js",
@@ -13,9 +13,27 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "scripts-info": {
+    "start": "Runs the compiled application in production mode using environment variables.",
+    "dev": "Starts the development server with hot-reload (tsx) and development environment.",
+    "build": "Compiles TypeScript to JavaScript and resolves path aliases.",
+    "clean": "Removes the dist directory for a fresh build.",
+    "setup-env": "Initializes .env.dev and .env.prod files from templates.",
+    "format": "Auto-formats the entire codebase using Prettier.",
+    "lint": "Checks for code quality and security issues using ESLint."
+  },
+  "keywords": [
+    "nodejs",
+    "express",
+    "typescript",
+    "esm",
+    "starter"
+  ],
+  "author": "Dryst",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@types/cors": "^2.8.19",
