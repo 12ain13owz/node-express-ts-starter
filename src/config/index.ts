@@ -31,28 +31,24 @@ const envSchema: z.ZodType<AppConfig> = z.object({
 const validateEnv = (): AppConfig => {
   const env = envSchema.safeParse(process.env)
   if (!env.success) {
-    const errorMessage = env.error.issues.map((issue) => issue.message).join(', ')
-    throw new Error(errorMessage)
+    const errorMessages = env.error.issues
+      .map((issue) => `- ${issue.path.join('.')}: ${issue.message}`)
+      .join('\n')
+
+    throw new Error(`\n${errorMessages}`)
   }
 
   return env.data
 }
 
-let env: AppConfig
-
 const initEnv = (): AppConfig => {
-  loadEnvFile()
-  return validateEnv()
-}
-
-export const getEnv = (): AppConfig => {
-  if (env) return env
-
   try {
-    env = initEnv()
-    return env
+    loadEnvFile()
+    return validateEnv()
   } catch (error) {
     console.error(chalk.redBright(error))
     process.exit(1)
   }
 }
+
+export const env = initEnv()

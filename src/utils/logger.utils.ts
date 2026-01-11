@@ -3,10 +3,8 @@ import { existsSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { createLogger, format, transports } from 'winston'
 
-import { getEnv } from '@/config'
+import { env } from '@/config'
 import { AnsiColors, LOG_LEVEL_COLORS, LOG_LEVELS, DisplayLevel } from '@/const/logger.const'
-
-const env = getEnv()
 
 // # ==================== File Transport Utilities ====================
 

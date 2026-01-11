@@ -1,12 +1,11 @@
 import type { Express } from 'express'
 import type { Server } from 'http'
 
-import { getEnv } from '@/config'
+import { env } from '@/config'
 import { APP_GENERIC } from '@/const/app.const'
 
 import { logger } from './logger.utils'
 
-const env = getEnv()
 let serverInstance: Server | null = null
 
 export const startServer = (app: Express, port: number): void => {

@@ -1,14 +1,12 @@
 import { NextFunction, Request, Response } from 'express'
 
-import { getEnv } from '@/config'
+import { env } from '@/config'
 import { HttpStatus } from '@/const/http-status.const'
 import { ERRORS } from '@/const/message.const'
 import { AppEnv } from '@/types/app.type'
 import { AppError, ErrorLogger } from '@/utils/error-handling.utils'
 import { logger } from '@/utils/logger.utils'
 import { createResponse } from '@/utils/response.utils'
-
-const env = getEnv()
 
 export const errorHandler = async (
   error: AppError | Error,
