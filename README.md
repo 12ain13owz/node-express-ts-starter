@@ -117,7 +117,7 @@ docker stop node-starter-app
 docker rm node-starter-app
 ```
 
-## API Documentation
+## 📖 API Documentation
 
 This project uses @stoplight/elements to serve interactive API documentation based on OpenAPI (Swagger) specifications. The documentation is available at the /docs endpoint.
 
@@ -131,7 +131,7 @@ http://localhost:3000/docs
 
 3. **Updating Documentation:** Modify the YAML files in the docs/ directory to update the API documentation. The @stoplight/elements library renders these files into an interactive UI.
 
-## Linting and Code Quality
+## 🛡️ Linting and Code Quality
 
 This project uses **ESLint** with TypeScript and security-focused plugins to ensure code quality and consistency.
 
@@ -183,7 +183,7 @@ node-express-ts-starter/
 
 - scripts/: Automation scripts for environment setup (e.g., generating .env.dev and .env.prod from templates).
 
-## Scripts
+## 📜 Scripts
 
 - `npm start`: Run the compiled JavaScript in production
 - `npm run dev`: Run in development mode with hot-reloading
@@ -193,7 +193,7 @@ node-express-ts-starter/
 - `npm run lint`: Check code for linting issues
 - `npm run lint:fix`: Automatically fix linting issues
 
-## Updating Dependencies
+## 📦 Updating Dependencies
 
 To keep dependencies up-to-date:
 
