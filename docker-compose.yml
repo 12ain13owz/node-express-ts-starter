@@ -1,0 +1,10 @@
+services:
+  nodejs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: node-starter-img
+    container_name: node-stater-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
