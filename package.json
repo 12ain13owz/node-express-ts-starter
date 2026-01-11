@@ -25,9 +25,7 @@
   "keywords": [
     "nodejs",
     "express",
-    "typescript",
-    "esm",
-    "starter"
+    "typescript"
   ],
   "author": "Dryst",
   "license": "MIT",
