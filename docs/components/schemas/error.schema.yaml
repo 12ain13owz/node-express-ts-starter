@@ -85,7 +85,9 @@ properties:
                     - type: number
                     - type: boolean
                     - type: null
-                example: ['1', 2, true, null]
+                    - type: undefined
+                    - type: string
+                example: ['1', 2, true, null, undefined, '2025-05-29T07:28:04.886Z']
               description:
                 type: string
                 description: Additional description of the error
