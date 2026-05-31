@@ -1,63 +1,58 @@
-# Node Stater with Express and TypeScript
+# Node Starter (Express + TypeScript)
 
-This is a boilerplate starter for building a scalable REST API using **Node.js**, **Express**, and **TypeScript**. It includes tools and configurations for development such as **Winston** and **Morgan** for logging, **ESLint** for code linting, **Zod** for schema validation, and **Docker** support. The template ensures consistency with standardized configurations like `.env` formatting and TypeScript setup.
+A production-ready template for building REST APIs with Node.js, Express, and TypeScript. It ships with a clean, feature-based architecture, structured logging, centralized error handling, rate limiting, and ready-to-use OpenAPI documentation.
 
-## ✨ Features
+> Building a new feature with an AI assistant? Read [`AGENTS.md`](./AGENTS.md) first — it documents the conventions and provides a step-by-step recipe for adding features consistently.
 
-- **Express** for building RESTful APIs
-- **TypeScript** for type safety and scalability
-- **Winston** and **Morgan** for efficient logging
-- **ESLint** with TypeScript and security plugins for code quality
-- **Zod** for runtime schema validation
-- **Docker** support for containerized deployment
-- **@stoplight/elements** for interactive API documentation
-- Pre-configured `tsconfig.json` and ESLint rules
-- OpenAPI-based API documentation with YAML schemas
+## Tech Stack
 
-## 🚀 Prerequisites
+- Node.js (ESM)
+- Express 5
+- TypeScript 6
+- Zod (environment validation)
+- Winston + winston-daily-rotate-file (logging)
+- ESLint 10 + Prettier
+- Stoplight Elements (API docs)
+- Docker / Docker Compose
 
-- **Node.js**: v22.x or higher
-- **npm**: v10.x or higher
-- **Docker**: (optional) for containerized deployment
-- **Git**: For cloning the repository
+## Requirements
 
-## 🔧 Local Development
+- Node.js >= 20
+- npm >= 10
+- Docker (optional)
 
-1. **Navigate to the directory**:
+## Getting Started
 
-```bash
-cd ./node-express-ts-stater
-```
-
-2. **Install dependencies**
+1. Install dependencies
 
 ```bash
 npm install
 ```
 
-## 🔑 Environment Variables
+2. Create the environment files
 
-To configure the application, you need to create a `.env.development` file in the project root. Below are two methods to set it up:
+```bash
+npm run setup-env
+```
 
-### Option 1: Copy from `.env.example`
+3. Start the development server
 
-1. **Create a `.env.development` file** in the project root:
+```bash
+npm run dev
+```
 
-   ```bash
-   cp .env.example .env.development
-   ```
+The server starts at http://localhost:3000
 
-### Option 2: Use the Setup Script
+## Environment Variables
 
-2. **Run the setup script** to automatically generate `.env.development` and `.env.production` from `.env.example`
+Environment files are loaded based on `NODE_ENV`:
 
-   ```bash
-   npm run setup-env
-   ```
+- `NODE_ENV=development` -> `.env.development`
+- `NODE_ENV=production` -> `.env.production`
 
-### Configuring Environment Variables
+Values are validated at startup with Zod (see `src/core/config/config.ts`); the process exits if any variable is missing or invalid.
 
-**Edit `.env.development`** with your configuration. All values **must** be enclosed in double quotes (`"`) for consistency:
+Example values from `.env.example`:
 
 ```env
 PORT="3000"
@@ -68,148 +63,110 @@ LOG_LEVEL_FILE="info"
 LOG_LEVEL_ERROR_FILE="error"
 ```
 
-**Note**: Ensure `.env.development` is listed in `.gitignore` to keep it out of version control.
+## Available Scripts
 
-Run the project in development mode with hot-reloading:
+- `npm run dev`: run with `tsx --watch` using `.env.development`
+- `npm run build`: clean `dist`, compile TypeScript, then rewrite path aliases (`tsc-alias`)
+- `npm start`: run the compiled build using `.env.production`
+- `npm run fix`: auto-fix ESLint issues and format with Prettier
+- `npm run clean`: remove the `dist` directory
+- `npm run setup-env`: generate `.env.development` and `.env.production` from `.env.example`
 
-```bash
-npm run dev
+## API Endpoints
+
+- `GET /`: basic API smoke test
+  - response: `{ "message": "Hello World!" }`
+- `GET /health`: health check (success)
+- `GET /health/error`: health check that simulates an error
+- `GET /docs`: API documentation page
+
+The standard response envelope is:
+
+```json
+{
+  "message": "...",
+  "timestamp": "ISO-8601",
+  "data": {}
+}
 ```
 
-The server will be available at [http://localhost:3000](http://localhost:3000).
+## API Documentation
 
-## 🐳 Running with Docker
+- UI: `docs/index.html`
+- OpenAPI spec: `docs/openapi.yaml`
+- Schemas: `docs/components/schemas`
+- Responses: `docs/components/responses`
+- Paths: `docs/paths`
 
-### Docker Compose
+Open the docs in the browser at:
 
-This is the easiest way to get started. It handles the build process and port mapping automatically.
-
-1. **Start the application:**
-
-```bash
-docker-compose up -d --build
-```
-
-2. **Stop the application:**
-
-```bash
-docker-compose down
-```
-
-### Docker CLI
-
-1. **Build the Docker image**
-
-```bash
-docker build -t node-starter-img .
-```
-
-2. **Run the container**
-
-```bash
-docker run -d -p 3000:3000 --name node-starter-app node-starter-img
-```
-
-3. **Stop and remove the container**
-
-```bash
-docker stop node-starter-app
-docker rm node-starter-app
-```
-
-## 📖 API Documentation
-
-This project uses @stoplight/elements to serve interactive API documentation based on OpenAPI (Swagger) specifications. The documentation is available at the /docs endpoint.
-
-1. **Access API Documentation:** After starting the server, visit:
-
-```
 http://localhost:3000/docs
+
+## Logging
+
+- Console and file logging via Winston
+- Daily-rotated files organized by year/month
+- Log location: `logs/YYYY/MM`
+- Separate general (`.log`) and error (`.error.log`) files
+
+## Docker
+
+Run with Docker Compose:
+
+```bash
+docker compose up -d --build
 ```
 
-2. **API Specification:** The OpenAPI specification is defined in the docs/ directory, with the main file being docs/openapi.yaml. Supporting schemas and responses are located in docs/components/ and docs/paths/.
+Stop the container:
 
-3. **Updating Documentation:** Modify the YAML files in the docs/ directory to update the API documentation. The @stoplight/elements library renders these files into an interactive UI.
-
-## 🛡️ Linting and Code Quality
-
-This project uses **ESLint** with TypeScript and security-focused plugins to ensure code quality and consistency.
-
-1. **Run linting** to check for issues:
-
-   ```bash
-   npm run lint
-   ```
-
-2. **Fix linting issues** automatically (where possible):
-
-   ```bash
-   npm run lint:fix
-   ```
-
-The ESLint configuration (`eslint.config.mjs`) includes:
-
-- TypeScript-specific rules (`@typescript-eslint`)
-- Security best practices (`eslint-plugin-security`, `eslint-plugin-no-unsanitized`)
-- Import sorting (`eslint-plugin-import`)
-
-## 📂 Project Structure Overview
-
-```
-node-express-ts-starter/
-├── docs/
-├── scripts/
-├── src/
-│   ├── config/
-│   ├── const/
-│   ├── controllers/
-│   ├── middlewares/
-│   ├── routes/
-│   ├── types/
-│   ├── utils/
-│   └── main.ts
-├── .env.example
-├── docker-compose.yml
-├── Dockerfile
-├── package.json
-└── tsconfig.json
+```bash
+docker compose down
 ```
 
-#### Key Directories
+Note: the current `Dockerfile` runs `npm run dev`.
 
-- src/: Core application logic, separated by responsibility.
+## Project Structure
 
-- docs/: API documentation and technical specifications.
+```text
+.
+|- docs/                      # OpenAPI spec + Stoplight Elements UI
+|  |- components/
+|  |  |- responses/
+|  |  \- schemas/
+|  |- paths/
+|  |  \- health/
+|  |- index.html
+|  \- openapi.yaml
+|- scripts/
+|  \- setup-env.mjs
+|- src/
+|  |- core/                   # App infrastructure (not feature-specific)
+|  |  |- config/              # Env loading + Zod validation
+|  |  |- error/               # AppError, error logger, error middleware
+|  |  |- logger/              # Winston logger setup
+|  |  |- middleware/          # Global middleware (e.g. rate limit)
+|  |  \- server/              # Server bootstrap + graceful shutdown
+|  |- features/               # Feature modules (one folder per feature)
+|  |  |- docs/
+|  |  |- health/
+|  |  \- test/
+|  |- shared/                 # Cross-cutting building blocks
+|  |  |- constants/           # HttpStatus, messages, app constants
+|  |  |- types/               # Shared types + Express augmentation
+|  |  \- utils/               # Helpers (e.g. createResponse)
+|  |- main.ts                 # App entry point + middleware wiring
+|  \- routes.ts               # Root router (mounts every feature router)
+|- docker-compose.yml
+|- Dockerfile
+|- eslint.config.mjs
+|- package.json
+\- tsconfig.json
+```
 
-- scripts/: Automation scripts for environment setup (e.g., generating .env.dev and .env.prod from templates).
+## Contributing / Adding Features
 
-## 📜 Scripts
+This project follows a strict, consistent structure. Before adding or changing a feature, read [`AGENTS.md`](./AGENTS.md) for the conventions and the feature-creation recipe (with an `auth/login` example). Always run `npm run fix` and `npm run build` before committing.
 
-- `npm start`: Run the compiled JavaScript in production
-- `npm run dev`: Run in development mode with hot-reloading
-- `npm run build`: Compile TypeScript to JavaScript
-- `npm run setup-env`: Setup script environment,
-- `npm run format`: Automatically fix format prettier,
-- `npm run lint`: Check code for linting issues
-- `npm run lint:fix`: Automatically fix linting issues
+## License
 
-## 📦 Updating Dependencies
-
-To keep dependencies up-to-date:
-
-1. Check for outdated packages:
-
-   ```bash
-   npm outdated
-   ```
-
-2. Update dependencies to the latest versions:
-
-   ```bash
-   npx npm-check-updates -u
-   npm install --force
-   ```
-
-## 📄 License
-
-This project is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+MIT
