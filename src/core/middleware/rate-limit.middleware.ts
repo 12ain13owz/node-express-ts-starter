@@ -1,7 +1,6 @@
 import rateLimit from 'express-rate-limit'
 
-import { HttpStatus } from '@/const/http-status.const'
-import { ERRORS } from '@/const/message.const'
+import { ERRORS, HttpStatus } from '@/shared/constants'
 
 export const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,

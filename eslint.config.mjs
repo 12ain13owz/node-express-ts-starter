@@ -1,80 +1,88 @@
-/** @type {import('eslint').Linter.Config[]} */
-import pluginJs from '@eslint/js'
-import importPlugin from 'eslint-plugin-import'
+// @ts-check
+import eslint from '@eslint/js'
+import prettier from 'eslint-config-prettier'
+import importPlugin from 'eslint-plugin-import-x'
 import security from 'eslint-plugin-security'
+import unusedImports from 'eslint-plugin-unused-imports'
 import globals from 'globals'
 import tseslint from 'typescript-eslint'
 
-export default [
-  // Ignore files and directories
-  { ignores: ['node_modules/**', 'dist/**/*', 'scripts/**', 'eslint.config.mjs'] },
-
-  // Target files to lint
-  { files: ['src/**/*.{js,mjs,cjs,ts}'] },
-
-  // Language options for Node.js environment
+export default tseslint.config(
+  // ── Ignores ───────────────────────────────────────────────────────────────
   {
-    languageOptions: {
-      globals: globals.node,
-      parser: tseslint.parser, // Use TypeScript parser
-      parserOptions: {
-        sourceType: 'module', // Support ES Modules (matches tsconfig.json "module": "nodenext")
-        project: './tsconfig.json', // Enable type-aware linting
-        tsconfigRootDir: import.meta.dirname, // Root directory for tsconfig
-      },
-    },
+    ignores: ['node_modules/**', 'dist/**', 'scripts/**', 'eslint.config.mjs'],
   },
 
-  // JavaScript recommended rules
-  pluginJs.configs.recommended,
-
-  // TypeScript recommended rules
-  ...tseslint.configs.recommended,
-  ...tseslint.configs.recommendedTypeChecked, // Type-aware rules for stricter TypeScript linting
-
-  // Custom rules and plugins
+  // ── TypeScript (Node.js / Express backend) ──────────────────────────────────
   {
-    plugins: { import: importPlugin, security },
+    files: ['src/**/*.{js,mjs,cjs,ts}'],
+    extends: [
+      eslint.configs.recommended,
+      ...tseslint.configs.recommended,
+      ...tseslint.configs.recommendedTypeChecked, // type-aware rules for stricter linting
+      prettier, // MUST be last: turns off ESLint rules that conflict with Prettier
+    ],
+    languageOptions: {
+      globals: globals.node,
+      parserOptions: {
+        // Type-aware linting via the TypeScript project service (recommended over `project`)
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    plugins: {
+      import: importPlugin,
+      'unused-imports': unusedImports,
+      security,
+    },
     rules: {
-      // General JavaScript rules
-      'no-async-promise-executor': 'error', // Prevent unsafe Promise executor functions
-      'no-throw-literal': 'error', // Disallow throwing literals (e.g., throw "error")
-      'no-eval': 'error', // Disallow use of eval()
-      'no-console': ['error', { allow: ['warn', 'error'] }], // Allow console.warn and console.error for logging
-      'no-process-env': 'warn', // Warn on direct process.env access (encourage dotenv)
+      // ── Safety & error handling ──────────────────────────────────────────────
+      'no-async-promise-executor': 'error', // unsafe Promise executor functions
+      'no-throw-literal': 'error', // always throw Error instances
+      'no-eval': 'error', // disallow eval()
+      '@typescript-eslint/no-floating-promises': 'error', // every Promise must be awaited/handled
+      '@typescript-eslint/no-misused-promises': 'error', // catch async fns passed where sync is expected
 
-      // Complexity control (adjusted for Express APIs)
-      complexity: ['warn', { max: 15 }], // Allow higher complexity for API endpoints
+      // ── Logging & environment ────────────────────────────────────────────────
+      'no-console': ['error', { allow: ['warn', 'error'] }], // prefer the winston logger
+      'no-process-env': 'warn', // read env through the central config module
 
-      // TypeScript-specific rules
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }], // Ignore unused variables starting with _
-      '@typescript-eslint/no-explicit-any': 'error', // Disallow explicit any
-      '@typescript-eslint/explicit-module-boundary-types': 'off', // Allow implicit return types in Express handlers
-      '@typescript-eslint/require-await': 'off', // Allow async functions without await (common in Express middleware)
+      // ── Security ─────────────────────────────────────────────────────────────
+      'security/detect-object-injection': 'warn',
 
-      // Security and sanitization
-      'security/detect-object-injection': 'warn', // Warn on potential object injection vulnerabilities
+      // ── Complexity (relaxed for Express handlers) ────────────────────────────
+      complexity: ['warn', { max: 15 }],
 
-      // Import ordering (aligned with tsconfig.json paths: @/*)
+      // ── TypeScript ───────────────────────────────────────────────────────────
+      '@typescript-eslint/no-explicit-any': 'error',
+      // Auto-rewrite type-only imports to `import type` on --fix / save
+      '@typescript-eslint/consistent-type-imports': [
+        'error',
+        { prefer: 'type-imports', fixStyle: 'separate-type-imports' },
+      ],
+      '@typescript-eslint/explicit-module-boundary-types': 'off', // implicit return types are fine for handlers
+      '@typescript-eslint/require-await': 'off', // async middleware without await is common
+      '@typescript-eslint/no-unused-vars': 'off', // delegated to unused-imports below
+
+      // ── Imports ──────────────────────────────────────────────────────────────
+      'unused-imports/no-unused-imports': 'error', // auto-remove unused imports on --fix
+      'unused-imports/no-unused-vars': [
+        'warn',
+        { vars: 'all', varsIgnorePattern: '^_', args: 'after-used', argsIgnorePattern: '^_' },
+      ],
       'import/order': [
         'error',
         {
-          groups: [['builtin', 'external'], 'internal', ['parent', 'sibling', 'index']],
+          groups: [['builtin', 'external'], 'internal', ['parent', 'sibling', 'index'], 'type'],
           pathGroups: [
-            {
-              pattern: '@/**', // Match @/ imports from src/*
-              group: 'internal',
-              position: 'after',
-            },
+            // Match the @/* alias defined in tsconfig.json
+            { pattern: '@/**', group: 'internal', position: 'after' },
           ],
           pathGroupsExcludedImportTypes: ['builtin'],
-          alphabetize: {
-            order: 'asc',
-            caseInsensitive: true,
-          },
+          alphabetize: { order: 'asc', caseInsensitive: true },
           'newlines-between': 'always',
         },
       ],
     },
-  },
-]
+  }
+)

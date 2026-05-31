@@ -5,13 +5,17 @@ import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { z } from 'zod'
 
-import { LogLevel } from '@/const/logger.const'
-import { ERRORS, SUCCESS } from '@/const/message.const'
-import { AppConfig, AppEnv, EnvFileName } from '@/types/app.type'
+import type { LogLevel } from '@/shared/constants'
+import { ERRORS, SUCCESS } from '@/shared/constants'
+import type { AppConfig } from '@/shared/types'
+import { AppEnv, EnvFileName } from '@/shared/types'
 
-const loadEnvFile = (): void => {
+const resolveEnvFile = (): string => {
   const nodeEnv = (process.env.NODE_ENV as AppEnv | undefined) ?? AppEnv.DEVELOPMENT
-  const envFile = nodeEnv === AppEnv.PRODUCTION ? EnvFileName.PRODUCTION : EnvFileName.DEVELOPMENT
+  return nodeEnv === AppEnv.PRODUCTION ? EnvFileName.PRODUCTION : EnvFileName.DEVELOPMENT
+}
+
+const verifyEnvFile = (envFile: string): void => {
   const envPath = resolve(process.cwd(), envFile)
 
   if (!existsSync(envPath)) throw new Error(ERRORS.UTIL.notFound(envFile))
@@ -42,11 +46,13 @@ const validateEnv = (): AppConfig => {
 }
 
 const initEnv = (): AppConfig => {
+  const envFile = resolveEnvFile()
+
   try {
-    loadEnvFile()
+    verifyEnvFile(envFile)
     return validateEnv()
   } catch (error) {
-    console.error(chalk.redBright(error))
+    console.error(chalk.redBright(ERRORS.CONFIG.load(envFile)), error)
     process.exit(1)
   }
 }

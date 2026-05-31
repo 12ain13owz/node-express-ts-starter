@@ -1,4 +1,4 @@
-import { LogLevel } from '@/const/logger.const'
+import type { LogLevel } from '@/shared/constants'
 
 export enum AppEnv {
   PRODUCTION = 'production',
@@ -19,7 +19,7 @@ export type AppConfig = {
   LOG_LEVEL_ERROR_FILE: LogLevel
 }
 
-export interface AppResponse<T> {
+export type AppResponse<T> = {
   message: string
   timestamp: string
   data?: T

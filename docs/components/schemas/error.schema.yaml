@@ -14,6 +14,10 @@ properties:
     description: Additional error details (only included in development mode)
     nullable: true
     properties:
+      name:
+        type: string
+        description: The error class name
+        example: AppError
       status:
         type: integer
         description: HTTP status code of the error
@@ -21,12 +25,13 @@ properties:
       severity:
         type: string
         description: The severity level of the error
-        example: error | warn | info | http | verbose | debug'
+        enum: [error, warn, info, http, verbose, debug]
+        example: error
       context:
         type: object
         description: Contextual information about the error
         properties:
-          operationName:
+          operation:
             type: string
             description: The name of the operation that caused the error
             example: errorController
@@ -46,22 +51,19 @@ properties:
                 example: /health/error
               body:
                 type: object
-                description: The request body
+                description: The request body (omitted when empty)
                 nullable: true
-                example: undefined
               params:
                 type: object
-                description: The URL parameters
+                description: The URL parameters (omitted when empty)
                 nullable: true
-                example: undefined
               query:
                 type: object
-                description: The query parameters
+                description: The query parameters (omitted when empty)
                 nullable: true
-                example: undefined
-          additionalData:
+          metadata:
             type: object
-            description: Additional data related to the error
+            description: Additional data attached to the error
             nullable: true
             properties:
               userId:
@@ -84,22 +86,37 @@ properties:
                     - type: string
                     - type: number
                     - type: boolean
-                    - type: null
-                    - type: undefined
-                    - type: string
-                example: ['1', 2, true, null, undefined, '2025-05-29T07:28:04.886Z']
+                    - type: 'null'
+                example: ['1', 2, true, null, null, '2025-05-29T07:28:04.886Z']
               description:
                 type: string
                 description: Additional description of the error
                 nullable: true
                 example: null
-              email:
-                type: string
-                description: The email associated with the request
-                nullable: true
-                example: undefined
               createdAt:
                 type: string
                 format: date-time
                 description: The creation timestamp in ISO 8601 format
                 example: 2025-05-29T07:28:04.886Z
+      stack:
+        type: array
+        description: Parsed stack trace frames (most recent call first)
+        items:
+          type: object
+          properties:
+            function:
+              type: string
+              description: The function name at this frame
+              example: errorController
+            file:
+              type: string
+              description: The source file, relative to the project root
+              example: src/features/health/health.controller.ts
+            line:
+              type: integer
+              description: The line number in the source file
+              example: 26
+            column:
+              type: integer
+              description: The column number in the source file
+              example: 11

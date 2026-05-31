@@ -1,16 +1,15 @@
+import { env } from '@/core/config'
+import { logger } from '@/core/logger'
+import { APP_GENERIC } from '@/shared/constants'
+
 import type { Express } from 'express'
 import type { Server } from 'http'
-
-import { env } from '@/config'
-import { APP_GENERIC } from '@/const/app.const'
-
-import { logger } from './logger.utils'
 
 let serverInstance: Server | null = null
 
 export const startServer = (app: Express, port: number): void => {
   serverInstance = app.listen(port, () =>
-    logger.info(APP_GENERIC.serverListening(env.BASE_URL, port))
+    logger.info(APP_GENERIC.serverListening(env.BASE_URL, port), { source: false })
   )
 
   process.on('unhandledRejection', handleFatalError)

@@ -1,40 +1,34 @@
 {
   "compilerOptions": {
-    /* Target & Module System */
+    /* Output — emit Node-ready JS (no bundler in the pipeline) */
     "target": "ES2022",
-    "module": "NodeNext", // Use modern Node.js ESM standards
-    "moduleResolution": "NodeNext", // Resolve modules using Node.js logic
-    "lib": ["ES2022"], // Set standard library APIs
+    "lib": ["ES2022"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "rootDir": "src",
+    "outDir": "dist",
+    "sourceMap": true,
+    "removeComments": true,
 
-    /* Path Mapping */
-    "baseUrl": ".",
+    /* Module interop */
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+
+    /* Path alias — resolved relative to this file (baseUrl is deprecated in TS 6+) */
     "paths": {
-      "@/*": ["src/*"] // Map @/ alias to src directory
+      "@/*": ["./src/*"]
     },
-    "rootDir": "src", // Source file location
-    "outDir": "dist", // Compiled output location
 
-    /* Strictness */
-    "strict": true, // Enable all strict type-checking options
-    "noImplicitAny": true, // Disallow inferred 'any' types
-    "strictNullChecks": true, // Force explicit null/undefined handling
-    "strictFunctionTypes": true, // Enforce stronger function type checks
-    "noUnusedLocals": true, // Error on unused local variables
-    "noUnusedParameters": true, // Error on unused function parameters
-    "noImplicitReturns": true, // Ensure all code paths return a value
-    "noFallthroughCasesInSwitch": true, // Prevent switch-case fallthrough errors
+    /* Type safety (strict already covers noImplicitAny / strictNullChecks / etc.) */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
 
-    /* Interop & Helpers */
-    "esModuleInterop": true, // Smooth import of CommonJS modules
-    "forceConsistentCasingInFileNames": true, // Ensure case-sensitive file naming
-    "skipLibCheck": true, // Speed up build by skipping declaration checks
-    "resolveJsonModule": true, // Allow importing .json files
-    "removeComments": true, // Strip comments from output files
-
-    /* Advanced */
-    "declaration": false, // Skip generating .d.ts files
-    "sourceMap": true, // Enable sourcemaps for better debugging
-    "isolatedModules": true // Ensure compatibility with tsx/esbuild
+    /* Build performance */
+    "skipLibCheck": true
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]

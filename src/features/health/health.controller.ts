@@ -1,10 +1,8 @@
-import { NextFunction, Request, Response } from 'express'
+import { AppError } from '@/core/error'
+import { ErrorSeverity, HttpStatus, SUCCESS } from '@/shared/constants'
+import { createResponse } from '@/shared/utils'
 
-import { HttpStatus } from '@/const/http-status.const'
-import { ErrorSeverity } from '@/const/logger.const'
-import { SUCCESS } from '@/const/message.const'
-import { AppError } from '@/utils/error-handling.utils'
-import { createResponse } from '@/utils/response.utils'
+import type { NextFunction, Request, Response } from 'express'
 
 export const successController = async (
   _req: Request,
@@ -26,9 +24,9 @@ export const errorController = async (
 ): Promise<void> => {
   try {
     throw new AppError('Test error function', HttpStatus.BAD_REQUEST, ErrorSeverity.ERROR)
-      .addOperationName('errorController')
-      .addEndpointContext(req)
-      .addAdditionalData({
+      .withOperation('errorController')
+      .withEndpoint(req)
+      .withMetadata({
         userId: 1,
         name: 'John Doe',
         active: false,

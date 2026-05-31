@@ -4,18 +4,19 @@ import helmet from 'helmet'
 import morgan from 'morgan'
 import path from 'path'
 
-import { env } from './config'
-import { errorHandler } from './middlewares/error-response.middleware'
-import { limiter } from './middlewares/rate-limit.middleware'
-import { mainRoutes } from './routes'
-import { helmetOptions } from './utils/response.utils'
-import { startServer } from './utils/server.utils'
+import { env } from '@/core/config'
+import { errorHandler } from '@/core/error'
+import { limiter } from '@/core/middleware'
+import { startServer } from '@/core/server'
+import { mainRoutes } from '@/routes'
+
+import { HELMET_OPTIONS } from './shared/constants'
 
 const app = express()
 const port = env.PORT
 
 app.use(cors())
-app.use(helmet(helmetOptions))
+app.use(helmet(HELMET_OPTIONS))
 app.use(morgan('dev'))
 app.use(express.json())
 app.use(limiter)
