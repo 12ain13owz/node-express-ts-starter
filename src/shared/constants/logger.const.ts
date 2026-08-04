@@ -38,11 +38,11 @@ export const LOG_LEVELS = {
 export type LogLevel = keyof typeof LOG_LEVELS
 export type DisplayLevel = Uppercase<LogLevel>
 
-export const LOG_LEVEL_COLORS: Record<DisplayLevel, AnsiColors> = {
-  ERROR: AnsiColors.ERROR,
-  WARN: AnsiColors.WARN,
-  INFO: AnsiColors.INFO,
-  HTTP: AnsiColors.HTTP,
-  VERBOSE: AnsiColors.VERBOSE,
-  DEBUG: AnsiColors.DEBUG,
-}
+export const LOG_LEVEL_COLORS = new Map<DisplayLevel, AnsiColors>([
+  ['ERROR', AnsiColors.ERROR],
+  ['WARN', AnsiColors.WARN],
+  ['INFO', AnsiColors.INFO],
+  ['HTTP', AnsiColors.HTTP],
+  ['VERBOSE', AnsiColors.VERBOSE],
+  ['DEBUG', AnsiColors.DEBUG],
+])

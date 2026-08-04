@@ -12,10 +12,11 @@ export class ErrorLogger {
   ): StructuredError {
     const frames = parseStackTrace(error.stack)
     const originFrame = frames[0]
-    const source = originFrame
-      ? { function: originFrame.function, file: originFrame.file, line: originFrame.line }
-      : undefined
-
+    const source = {
+      function: originFrame.function,
+      file: originFrame.file,
+      line: originFrame.line,
+    }
     const isAppError = error instanceof AppError
 
     return {
