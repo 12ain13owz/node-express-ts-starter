@@ -68,15 +68,21 @@ const baseLogger = createLogger({
 export type LogMetadata = {
   source?: Source | false
   persist?: boolean
-  [key: string]: unknown
-}
+} & Partial<Record<'level' | 'message' | 'timestamp', never>> & {
+    [key: string]: unknown
+  }
 
 const writeLog = (level: LogLevel, message: unknown, metadata: LogMetadata = {}): void => {
   const { source: sourceOption, persist, ...rest } = metadata
   const source = sourceOption === false ? undefined : (sourceOption ?? getCallerSource())
 
+  // Strip any reserved keys that slipped through untyped callers so metadata can't clobber the real log fields.
+  const safeRest = Object.fromEntries(
+    Object.entries(rest).filter(([key]) => !RESERVED_LOG_KEYS.has(key))
+  )
+
   // Winston types `message` as string, but the runtime accepts any value.
-  baseLogger.log({ level, message: message as string, ...rest, source, persist })
+  baseLogger.log({ level, message: message as string, ...safeRest, source, persist })
 }
 
 export const logger = {
