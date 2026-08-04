@@ -1,9 +1,7 @@
 import { getLogWriter, parseStackTrace } from '@/core/logger'
 import { ErrorSeverity, HttpStatus } from '@/shared/constants'
 import type { LogLevel } from '@/shared/constants'
-
 import { AppError } from './app-error'
-
 import type { ErrorContext, StructuredError } from './error.type'
 
 export class ErrorLogger {

@@ -1,13 +1,10 @@
 import { createLogger, format, transports } from 'winston'
-
 import { env } from '@/core/config'
 import type { LogLevel } from '@/shared/constants'
 import { LOG_LEVELS } from '@/shared/constants'
-
 import { formatLogLevel, formatLogMessage, formatTimestamp, formatValue } from './format'
 import { getCallerSource } from './stack'
 import { createFileTransport } from './transport'
-
 import type { Source } from './stack'
 
 // Handled explicitly or used as control flags; everything else is metadata.

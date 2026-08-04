@@ -1,7 +1,6 @@
 import { AppError } from '@/core/error'
 import { ErrorSeverity, HttpStatus, SUCCESS } from '@/shared/constants'
 import { createResponse } from '@/shared/utils'
-
 import type { NextFunction, Request, Response } from 'express'
 
 export const successController = async (

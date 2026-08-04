@@ -1,7 +1,6 @@
 import { env } from '@/core/config'
 import { logger } from '@/core/logger'
 import { APP_GENERIC } from '@/shared/constants'
-
 import type { Express } from 'express'
 import type { Server } from 'http'
 

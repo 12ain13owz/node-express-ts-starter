@@ -4,7 +4,6 @@ import chalk from 'chalk'
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { z } from 'zod'
-
 import type { LogLevel } from '@/shared/constants'
 import { ERRORS, SUCCESS } from '@/shared/constants'
 import type { AppConfig } from '@/shared/types'

@@ -6,8 +6,9 @@ import security from 'eslint-plugin-security'
 import unusedImports from 'eslint-plugin-unused-imports'
 import globals from 'globals'
 import tseslint from 'typescript-eslint'
+import { defineConfig } from 'eslint/config'
 
-export default tseslint.config(
+export default defineConfig(
   // ── Ignores ───────────────────────────────────────────────────────────────
   {
     ignores: ['node_modules/**', 'dist/**', 'scripts/**', 'eslint.config.mjs'],
@@ -18,8 +19,8 @@ export default tseslint.config(
     files: ['src/**/*.{js,mjs,cjs,ts}'],
     extends: [
       eslint.configs.recommended,
-      ...tseslint.configs.recommended,
-      ...tseslint.configs.recommendedTypeChecked, // type-aware rules for stricter linting
+      tseslint.configs.recommended,
+      tseslint.configs.recommendedTypeChecked, // type-aware rules for stricter linting
       prettier, // MUST be last: turns off ESLint rules that conflict with Prettier
     ],
     languageOptions: {
@@ -80,7 +81,7 @@ export default tseslint.config(
           ],
           pathGroupsExcludedImportTypes: ['builtin'],
           alphabetize: { order: 'asc', caseInsensitive: true },
-          'newlines-between': 'always',
+          'newlines-between': 'never',
         },
       ],
     },

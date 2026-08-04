@@ -1,5 +1,4 @@
 import rateLimit from 'express-rate-limit'
-
 import { ERRORS, HttpStatus } from '@/shared/constants'
 
 export const limiter = rateLimit({

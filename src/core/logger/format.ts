@@ -1,5 +1,4 @@
 import dayjs from 'dayjs'
-
 import type { DisplayLevel } from '@/shared/constants'
 import { AnsiColors, LOG_LEVEL_COLORS } from '@/shared/constants'
 

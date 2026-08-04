@@ -3,10 +3,8 @@ import { logger } from '@/core/logger'
 import { ERRORS, HttpStatus } from '@/shared/constants'
 import { AppEnv } from '@/shared/types'
 import { createResponse } from '@/shared/utils'
-
 import { AppError } from './app-error'
 import { ErrorLogger } from './error-logger'
-
 import type { NextFunction, Request, Response } from 'express'
 
 export const errorHandler = async (
