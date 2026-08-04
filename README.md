@@ -126,7 +126,7 @@ Stop the container:
 docker compose down
 ```
 
-Note: the current `Dockerfile` runs `npm run dev`.
+The image compiles TypeScript at build time and runs the compiled output (`npm start`), with `NODE_ENV=production` by default. Run `npm run setup-env` first so `.env.prod` exists — `docker-compose.yml` loads it via `env_file` (it is not copied into the image).
 
 ## Project Structure
 
