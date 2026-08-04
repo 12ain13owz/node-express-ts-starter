@@ -13,4 +13,13 @@ export const envSchema: z.ZodType<EnvConfig> = z.object({
   LOG_LEVEL_CONSOLE: z.enum(logLevel),
   LOG_LEVEL_FILE: z.enum(logLevel),
   LOG_LEVEL_ERROR_FILE: z.enum(logLevel),
+  CORS_ORIGINS: z
+    .string()
+    .optional()
+    .transform((value) =>
+      (value ?? '')
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter(Boolean)
+    ),
 })

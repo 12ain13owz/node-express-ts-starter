@@ -1,2 +1,2 @@
-export type { EnvConfig } from './env.type'
-export { env } from './env'
+export * from './env'
+export * from './options'
