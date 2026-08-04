@@ -7,12 +7,9 @@ import type { EnvConfig } from './env.type'
 const logLevel = Object.keys(LOG_LEVELS) as LogLevel[]
 
 export const envSchema: z.ZodType<EnvConfig> = z.object({
-  PORT: z.string().transform(Number),
+  PORT: z.coerce.number().int().positive().max(65535),
   NODE_ENV: z.enum([AppEnv.DEVELOPMENT, AppEnv.PRODUCTION]),
   BASE_URL: z.string(),
-  LOG_LEVEL_CONSOLE: z.enum(logLevel),
-  LOG_LEVEL_FILE: z.enum(logLevel),
-  LOG_LEVEL_ERROR_FILE: z.enum(logLevel),
   CORS_ORIGINS: z
     .string()
     .optional()
@@ -22,4 +19,8 @@ export const envSchema: z.ZodType<EnvConfig> = z.object({
         .map((origin) => origin.trim())
         .filter(Boolean)
     ),
+  LOG_LEVEL_CONSOLE: z.enum(logLevel),
+  LOG_LEVEL_FILE: z.enum(logLevel),
+  LOG_LEVEL_ERROR_FILE: z.enum(logLevel),
+  SHUTDOWN_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
 })
