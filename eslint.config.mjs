@@ -51,7 +51,9 @@ export default defineConfig(
     plugins: {
       import: importPlugin,
       'unused-imports': unusedImports,
-      security,
+      // @types/eslint-plugin-security is stale against ESLint 10's Plugin type
+      // (eslint-plugin-security itself ships no types) — cast around the mismatch.
+      security: /** @type {import('eslint').ESLint.Plugin} */ (security),
       n,
     },
     rules: {
