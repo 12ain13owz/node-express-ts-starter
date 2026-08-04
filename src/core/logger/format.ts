@@ -17,14 +17,20 @@ export const formatLogLevel = (level: string): string => {
 }
 
 const formatPrimitiveValue = (value: unknown): string => {
-  if (value === null) return applyColor('null', AnsiColors.NULL)
-  if (value === undefined) return applyColor('undefined', AnsiColors.UNDEFINED)
+  if (value === null) {
+    return applyColor('null', AnsiColors.NULL)
+  }
+  if (value === undefined) {
+    return applyColor('undefined', AnsiColors.UNDEFINED)
+  }
 
   switch (typeof value) {
     case 'string': {
       // Render separators/headers (multi-line uppercase strings) without quotes.
       const isSeparator = /^[\n\r\s=\-_A-Z0-9.]+$/.test(value) && /[\n\r]/.test(value)
-      if (isSeparator) return value
+      if (isSeparator) {
+        return value
+      }
       return applyColor(`"${value}"`, AnsiColors.STRING)
     }
     case 'number':
@@ -43,7 +49,9 @@ const formatDate = (date: Date): string => {
 }
 
 const formatArrayValue = (arr: unknown[], indentLevel: number = 0): string => {
-  if (arr.length === 0) return '[]'
+  if (arr.length === 0) {
+    return '[]'
+  }
 
   const indent = '  '.repeat(indentLevel)
   const nextIndent = '  '.repeat(indentLevel + 1)
@@ -64,7 +72,9 @@ const formatArrayValue = (arr: unknown[], indentLevel: number = 0): string => {
 
 const formatObjectValue = (obj: Record<string, unknown>, indentLevel: number = 0): string => {
   const entries = Object.entries(obj)
-  if (entries.length === 0) return '{}'
+  if (entries.length === 0) {
+    return '{}'
+  }
 
   const indent = '  '.repeat(indentLevel)
   const nextIndent = '  '.repeat(indentLevel + 1)
@@ -79,18 +89,27 @@ const formatObjectValue = (obj: Record<string, unknown>, indentLevel: number = 0
 
 export const formatValue = (value: unknown, indentLevel: number = 0): string => {
   // Date must be checked before Array/object since it is also an object.
-  if (value instanceof Date) return formatDate(value)
-  if (Array.isArray(value)) return formatArrayValue(value, indentLevel)
-  if (typeof value === 'object' && value !== null)
+  if (value instanceof Date) {
+    return formatDate(value)
+  }
+  if (Array.isArray(value)) {
+    return formatArrayValue(value, indentLevel)
+  }
+  if (typeof value === 'object' && value !== null) {
     return formatObjectValue(value as Record<string, unknown>, indentLevel)
+  }
 
   return formatPrimitiveValue(value)
 }
 
 export const formatLogMessage = (message: unknown): string => {
   if (Array.isArray(message)) {
-    if (message.length === 0) return '[]'
-    if (message.length === 1) return formatValue(message[0], 0)
+    if (message.length === 0) {
+      return '[]'
+    }
+    if (message.length === 1) {
+      return formatValue(message[0], 0)
+    }
 
     const formattedItems = message.map((item, index) => {
       const itemNumber = applyColor(`[${index}]`, AnsiColors.OTHER)

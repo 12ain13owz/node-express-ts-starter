@@ -3,8 +3,8 @@
     /* Output — emit Node-ready JS (no bundler in the pipeline) */
     "target": "ES2022",
     "lib": ["ES2022"],
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "rootDir": "src",
     "outDir": "dist",
     "sourceMap": true,

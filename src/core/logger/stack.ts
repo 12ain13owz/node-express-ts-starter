@@ -20,15 +20,18 @@ const toRelativePath = (rawFile: string): string => {
   const file = rawFile.replace(/^file:\/\/\/?/, '').replace(/\\/g, '/')
   const projectRoot = process.cwd().replace(/\\/g, '/')
 
-  if (file.toLowerCase().startsWith(projectRoot.toLowerCase()))
+  if (file.toLowerCase().startsWith(projectRoot.toLowerCase())) {
     return file.slice(projectRoot.length + 1)
+  }
 
   return file
 }
 
 const parseStackFrame = (line: string): StackFrame | null => {
   const match = STACK_FRAME_PATTERN.exec(line)
-  if (!match?.groups) return null
+  if (!match?.groups) {
+    return null
+  }
 
   const { fn, file, line: lineNumber, column } = match.groups
 
@@ -41,7 +44,9 @@ const parseStackFrame = (line: string): StackFrame | null => {
 }
 
 export const parseStackTrace = (stack?: string): StackFrame[] => {
-  if (!stack) return []
+  if (!stack) {
+    return []
+  }
 
   return stack
     .split('\n')
@@ -52,16 +57,22 @@ export const parseStackTrace = (stack?: string): StackFrame[] => {
 
 export const getCallerSource = (): Source | undefined => {
   const stack = new Error().stack
-  if (!stack) return undefined
+  if (!stack) {
+    return undefined
+  }
 
   const lines = stack.split('\n').slice(1)
 
   for (const line of lines) {
     // Skip the logger's own frames so `source` points at the real call site.
-    if (/[/\\]core[/\\]logger[/\\]/.test(line)) continue
+    if (/[/\\]core[/\\]logger[/\\]/.test(line)) {
+      continue
+    }
 
     const frame = parseStackFrame(line)
-    if (frame) return { function: frame.function, file: frame.file, line: frame.line }
+    if (frame) {
+      return { function: frame.function, file: frame.file, line: frame.line }
+    }
   }
 
   return undefined

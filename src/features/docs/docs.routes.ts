@@ -2,8 +2,10 @@ import SwaggerParser from '@apidevtools/swagger-parser'
 import { apiReference, type ApiReferenceConfiguration } from '@scalar/express-api-reference'
 import { Router } from 'express'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const router = Router()
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const specEntryPath = path.resolve(__dirname, 'spec/openapi.yaml')
 
 const scalarConfig: Partial<ApiReferenceConfiguration> = {

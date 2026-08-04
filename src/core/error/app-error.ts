@@ -20,11 +20,17 @@ export class AppError extends Error {
       url: req.originalUrl,
     }
 
-    if (req.params && Object.keys(req.params).length > 0) endpoint.params = { ...req.params }
-    if (req.query && Object.keys(req.query).length > 0) endpoint.query = { ...req.query }
+    if (req.params && Object.keys(req.params).length > 0) {
+      endpoint.params = { ...req.params }
+    }
+    if (req.query && Object.keys(req.query).length > 0) {
+      endpoint.query = { ...req.query }
+    }
 
     const body = req.body as Record<string, unknown>
-    if (req.body && Object.keys(body).length > 0) endpoint.body = { ...body }
+    if (req.body && Object.keys(body).length > 0) {
+      endpoint.body = { ...body }
+    }
 
     this.context.endpoint = endpoint
     return this

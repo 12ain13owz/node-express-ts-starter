@@ -17,7 +17,9 @@ const resolveEnvFile = (): string => {
 const verifyEnvFile = (envFile: string): void => {
   const envPath = resolve(process.cwd(), envFile)
 
-  if (!existsSync(envPath)) throw new Error(ERRORS.UTIL.notFound(envFile))
+  if (!existsSync(envPath)) {
+    throw new Error(ERRORS.UTIL.notFound(envFile))
+  }
   console.info(chalk.greenBright(SUCCESS.CONFIG.load(envFile)))
 }
 

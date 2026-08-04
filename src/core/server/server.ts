@@ -24,6 +24,9 @@ export const handleFatalError = (error: unknown): void => {
 }
 
 export const shutdown = (exitCode = 0): void => {
-  if (serverInstance) serverInstance.close(() => process.exit(exitCode))
-  else process.exit(exitCode)
+  if (serverInstance) {
+    serverInstance.close(() => process.exit(exitCode))
+  } else {
+    process.exit(exitCode)
+  }
 }
