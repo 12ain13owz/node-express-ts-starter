@@ -12,7 +12,7 @@ A production-ready template for building REST APIs with Node.js, Express, and Ty
 - Zod (environment validation)
 - Winston + winston-daily-rotate-file (logging)
 - ESLint 10 + Prettier
-- Stoplight Elements (API docs)
+- Scalar API Reference (OpenAPI docs UI)
 - Docker / Docker Compose
 
 ## Requirements
@@ -47,35 +47,35 @@ The server starts at http://localhost:3000
 
 Environment files are loaded based on `NODE_ENV`:
 
-- `NODE_ENV=development` -> `.env.development`
-- `NODE_ENV=production` -> `.env.production`
+- `NODE_ENV=development` -> `.env.dev`
+- `NODE_ENV=production` -> `.env.prod`
 
-Values are validated at startup with Zod (see `src/core/config/config.ts`); the process exits if any variable is missing or invalid.
+Values are validated at startup with Zod (see `src/core/config/env/env.schema.ts`); the process exits if any variable is missing or invalid.
 
 Example values from `.env.example`:
 
 ```env
 PORT="3000"
 NODE_ENV="development"
-BASE_URL="http://localhost:"
+BASE_URL="http://localhost:3000"
+CORS_ORIGINS="http://localhost:3000,http://localhost:4000,http://localhost:4200"
 LOG_LEVEL_CONSOLE="debug"
 LOG_LEVEL_FILE="info"
 LOG_LEVEL_ERROR_FILE="error"
+SHUTDOWN_TIMEOUT_MS="10000"
 ```
 
 ## Available Scripts
 
-- `npm run dev`: run with `tsx --watch` using `.env.development`
+- `npm run dev`: run with `tsx --watch` using `.env.dev`
 - `npm run build`: clean `dist`, compile TypeScript, then rewrite path aliases (`tsc-alias`)
-- `npm start`: run the compiled build using `.env.production`
+- `npm start`: run the compiled build using `.env.prod`
 - `npm run fix`: auto-fix ESLint issues and format with Prettier
 - `npm run clean`: remove the `dist` directory
-- `npm run setup-env`: generate `.env.development` and `.env.production` from `.env.example`
+- `npm run setup-env`: generate `.env.dev` and `.env.prod` from `.env.example`
 
 ## API Endpoints
 
-- `GET /`: basic API smoke test
-  - response: `{ "message": "Hello World!" }`
 - `GET /health`: health check (success)
 - `GET /health/error`: health check that simulates an error
 - `GET /docs`: API documentation page
@@ -92,11 +92,14 @@ The standard response envelope is:
 
 ## API Documentation
 
-- UI: `docs/index.html`
-- OpenAPI spec: `docs/openapi.yaml`
-- Schemas: `docs/components/schemas`
-- Responses: `docs/components/responses`
-- Paths: `docs/paths`
+Served by the `docs` feature (`src/features/docs/`) using [Scalar](https://github.com/scalar/scalar) as the UI, with the OpenAPI spec bundled at runtime (`@apidevtools/swagger-parser`):
+
+- UI: `GET /docs`
+- Bundled OpenAPI JSON: `GET /docs/openapi.json`
+- Spec entry point: `src/features/docs/spec/openapi.yaml`
+- Schemas: `src/features/docs/spec/components/models`
+- Responses: `src/features/docs/spec/components/responses`
+- Paths: `src/features/docs/spec/paths`
 
 Open the docs in the browser at:
 
@@ -129,29 +132,21 @@ Note: the current `Dockerfile` runs `npm run dev`.
 
 ```text
 .
-|- docs/                      # OpenAPI spec + Stoplight Elements UI
-|  |- components/
-|  |  |- responses/
-|  |  \- schemas/
-|  |- paths/
-|  |  \- health/
-|  |- index.html
-|  \- openapi.yaml
 |- scripts/
-|  \- setup-env.mjs
+|  |- setup-env.ts
+|  \- tsconfig.json
 |- src/
 |  |- core/                   # App infrastructure (not feature-specific)
-|  |  |- config/              # Env loading + Zod validation
+|  |  |- config/              # Env loading + Zod validation + runtime options (cors/helmet/rate-limit)
+|  |  |  \- env/              # EnvConfig type, Zod schema, loader, barrel
 |  |  |- error/               # AppError, error logger, error middleware
 |  |  |- logger/              # Winston logger setup
-|  |  |- middleware/          # Global middleware (e.g. rate limit)
 |  |  \- server/              # Server bootstrap + graceful shutdown
 |  |- features/               # Feature modules (one folder per feature)
-|  |  |- docs/
-|  |  |- health/
-|  |  \- test/
+|  |  |- docs/                # OpenAPI spec + Scalar API reference UI
+|  |  \- health/               # Health check (success + simulated error)
 |  |- shared/                 # Cross-cutting building blocks
-|  |  |- constants/           # HttpStatus, messages, app constants
+|  |  |- constants/           # HttpStatus, messages (SUCCESS/ERRORS/LOG), app constants
 |  |  |- types/               # Shared types + Express augmentation
 |  |  \- utils/               # Helpers (e.g. createResponse)
 |  |- main.ts                 # App entry point + middleware wiring
