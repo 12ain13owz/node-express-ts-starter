@@ -3,7 +3,7 @@
 import chalk from 'chalk'
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { ERRORS, SUCCESS } from '@/shared/constants'
+import { ERRORS, LOG } from '@/shared/constants'
 import { AppEnv, EnvFileName } from '@/shared/types'
 import { envSchema } from './env.schema'
 import type { EnvConfig } from './env.type'
@@ -21,13 +21,13 @@ const reportEnvFile = (envFile: string): void => {
   const envPath = resolve(process.cwd(), envFile)
 
   if (existsSync(envPath)) {
-    console.info(chalk.greenBright(SUCCESS.CONFIG.load(envFile)))
+    console.info(chalk.greenBright(LOG.CONFIG.load(envFile)))
     return
   }
 
   const nodeEnv = (process.env.NODE_ENV as AppEnv | undefined) ?? AppEnv.DEVELOPMENT
   if (nodeEnv === AppEnv.PRODUCTION) {
-    console.warn(chalk.yellowBright(SUCCESS.CONFIG.missing(envFile)))
+    console.warn(chalk.yellowBright(LOG.CONFIG.missing(envFile)))
     return
   }
 
@@ -54,7 +54,7 @@ const initEnv = (): EnvConfig => {
     reportEnvFile(envFile)
     return validateEnv()
   } catch (error) {
-    console.error(chalk.redBright(ERRORS.CONFIG.load(envFile)), error)
+    console.error(chalk.redBright(LOG.CONFIG.loadError(envFile)), error)
     process.exit(1)
   }
 }

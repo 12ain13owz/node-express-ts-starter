@@ -1,13 +1,18 @@
+// Console-only strings — never sent in API responses.
+export const LOG = {
+  CONFIG: {
+    load: (envFile: string) => `[Config] ✅ Loaded environment from: ${envFile}`,
+    missing: (envFile: string) => `[Config] ⚠️ Missing environment file: ${envFile}`,
+    loadError: (envFile: string) => `[Config] ❌ Unexpected error loading ${envFile}:`,
+  },
+}
+
 export const SUCCESS = {
   GENERIC: {
     OK: 'Operation successful',
     CREATED: 'Data created successfully',
     UPDATED: 'Data updated successfully',
     DELETED: 'Data deleted successfully',
-  },
-  CONFIG: {
-    load: (envFile: string) => `[Config] ✅ Loaded environment from: ${envFile}`,
-    missing: (envFile: string) => `[Config] ⚠️ Missing environment file: ${envFile}`,
   },
   UTIL: {
     create: (name: string) => `Created ${name} successfully`,
@@ -30,9 +35,6 @@ export const ERRORS = {
     TOO_MANY_REQUESTS: 'Too many requests. Please try again later',
     BAD_GATEWAY: 'Bad gateway',
     UNSPECIFIED_FUNCTION: 'Unspecified function',
-  },
-  CONFIG: {
-    load: (envFile: string) => `[Config] ❌ Unexpected error loading ${envFile}:`,
   },
   UTIL: {
     notFound: (item: string) => `${item} not found`,
