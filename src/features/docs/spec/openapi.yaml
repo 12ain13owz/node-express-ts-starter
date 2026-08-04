@@ -7,6 +7,10 @@ info:
 servers:
   - url: http://localhost:3000
 
+tags:
+  - name: Health
+    description: Service health checks
+
 paths:
   /health:
     $ref: './paths/health/health.yaml'
@@ -16,9 +20,9 @@ paths:
 components:
   schemas:
     HealthResponse:
-      $ref: './components/schemas/health.schema.yaml'
+      $ref: './components/models/health.schema.yaml'
     HealthErrorResponse:
-      $ref: './components/schemas/error.schema.yaml'
+      $ref: './components/models/error.schema.yaml'
   responses:
     SuccessResponse:
       $ref: './components/responses/success.response.yaml'

@@ -1,11 +1,29 @@
+import SwaggerParser from '@apidevtools/swagger-parser'
+import { apiReference, type ApiReferenceConfiguration } from '@scalar/express-api-reference'
 import { Router } from 'express'
 import path from 'node:path'
 
 const router = Router()
+const specEntryPath = path.resolve(__dirname, 'spec/openapi.yaml')
 
-router.get('/', (_req, res) => {
-  const htmlPath = path.resolve(__dirname, '../../../docs/index.html')
-  res.sendFile(htmlPath)
+const scalarConfig: Partial<ApiReferenceConfiguration> = {
+  url: '/docs/openapi.json',
+  theme: 'default',
+  darkMode: true,
+  hideClientButton: true,
+  hideTestRequestButton: true,
+  mcp: { disabled: true },
+}
+
+router.get('/openapi.json', async (_req, res, next) => {
+  try {
+    const bundled = await SwaggerParser.bundle(specEntryPath)
+    res.json(bundled)
+  } catch (error) {
+    next(error)
+  }
 })
+
+router.use('/', apiReference(scalarConfig))
 
 export const docsRouter = router

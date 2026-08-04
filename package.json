@@ -30,7 +30,8 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@stoplight/elements": "^9.0.24",
+    "@apidevtools/swagger-parser": "^12.1.0",
+    "@scalar/express-api-reference": "^0.10.12",
     "cors": "^2.8.6",
     "dayjs": "^1.11.21",
     "express": "^5.2.1",

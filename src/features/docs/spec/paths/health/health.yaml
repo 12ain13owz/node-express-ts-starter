@@ -1,4 +1,6 @@
 get:
+  tags:
+    - Health
   summary: Health check
   operationId: healthCheck
   responses:

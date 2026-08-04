@@ -2,7 +2,6 @@ import cors from 'cors'
 import express from 'express'
 import helmet from 'helmet'
 import morgan from 'morgan'
-import path from 'path'
 
 import { env } from '@/core/config'
 import { errorHandler } from '@/core/error'
@@ -21,7 +20,6 @@ app.use(morgan('dev'))
 app.use(express.json())
 app.use(limiter)
 
-app.use('/docs', express.static(path.join(__dirname, '../docs')))
 app.use(mainRoutes)
 app.use(errorHandler)
 

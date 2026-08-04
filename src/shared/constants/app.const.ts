@@ -10,7 +10,8 @@ export const HELMET_OPTIONS: HelmetOptions = {
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", 'cdn.stoplight.io', 'unpkg.com'],
+      scriptSrc: ["'self'", "'unsafe-inline'", 'cdn.jsdelivr.net'],
+      connectSrc: ["'self'", 'cdn.jsdelivr.net'],
     },
   },
 }
