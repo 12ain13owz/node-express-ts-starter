@@ -8,7 +8,7 @@ let serverInstance: Server | null = null
 
 export const startServer = (app: Express, port: number): void => {
   serverInstance = app.listen(port, () =>
-    logger.info(APP_GENERIC.serverListening(env.BASE_URL, port), { source: false })
+    logger.info(APP_GENERIC.serverListening(env.BASE_URL), { source: false })
   )
 
   process.on('unhandledRejection', handleFatalError)

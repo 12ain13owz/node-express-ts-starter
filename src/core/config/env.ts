@@ -3,37 +3,38 @@
 import chalk from 'chalk'
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { z } from 'zod'
-import type { LogLevel } from '@/shared/constants'
 import { ERRORS, SUCCESS } from '@/shared/constants'
-import type { AppConfig } from '@/shared/types'
 import { AppEnv, EnvFileName } from '@/shared/types'
+import { envSchema } from './env.schema'
+import type { EnvConfig } from './env.type'
 
 const resolveEnvFile = (): string => {
   const nodeEnv = (process.env.NODE_ENV as AppEnv | undefined) ?? AppEnv.DEVELOPMENT
   return nodeEnv === AppEnv.PRODUCTION ? EnvFileName.PRODUCTION : EnvFileName.DEVELOPMENT
 }
 
-const verifyEnvFile = (envFile: string): void => {
+// Node loads the file itself via --env-file-if-exists (see package.json scripts).
+// A missing file is fatal in development — you must have .env.dev locally. In
+// production it's only a warning: hosts like Render inject env vars directly
+// into process.env without an actual file on disk.
+const reportEnvFile = (envFile: string): void => {
   const envPath = resolve(process.cwd(), envFile)
 
-  if (!existsSync(envPath)) {
-    throw new Error(ERRORS.UTIL.notFound(envFile))
+  if (existsSync(envPath)) {
+    console.info(chalk.greenBright(SUCCESS.CONFIG.load(envFile)))
+    return
   }
-  console.info(chalk.greenBright(SUCCESS.CONFIG.load(envFile)))
+
+  const nodeEnv = (process.env.NODE_ENV as AppEnv | undefined) ?? AppEnv.DEVELOPMENT
+  if (nodeEnv === AppEnv.PRODUCTION) {
+    console.warn(chalk.yellowBright(SUCCESS.CONFIG.missing(envFile)))
+    return
+  }
+
+  throw new Error(ERRORS.UTIL.notFound(envFile))
 }
 
-const logLevel: LogLevel[] = ['error', 'warn', 'info', 'http', 'verbose', 'debug']
-const envSchema: z.ZodType<AppConfig> = z.object({
-  PORT: z.string().transform(Number),
-  NODE_ENV: z.enum([AppEnv.DEVELOPMENT, AppEnv.PRODUCTION]),
-  BASE_URL: z.string(),
-  LOG_LEVEL_CONSOLE: z.enum(logLevel),
-  LOG_LEVEL_FILE: z.enum(logLevel),
-  LOG_LEVEL_ERROR_FILE: z.enum(logLevel),
-})
-
-const validateEnv = (): AppConfig => {
+const validateEnv = (): EnvConfig => {
   const env = envSchema.safeParse(process.env)
   if (!env.success) {
     const errorMessages = env.error.issues
@@ -46,11 +47,11 @@ const validateEnv = (): AppConfig => {
   return env.data
 }
 
-const initEnv = (): AppConfig => {
+const initEnv = (): EnvConfig => {
   const envFile = resolveEnvFile()
 
   try {
-    verifyEnvFile(envFile)
+    reportEnvFile(envFile)
     return validateEnv()
   } catch (error) {
     console.error(chalk.redBright(ERRORS.CONFIG.load(envFile)), error)

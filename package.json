@@ -5,8 +5,8 @@
   "main": "main.ts",
   "type": "module",
   "scripts": {
-    "start": "node --env-file=.env.production dist/main.js",
-    "dev": "tsx --watch --env-file=.env.development src/main.ts",
+    "start": "node --env-file-if-exists=.env.prod dist/main.js",
+    "dev": "tsx --watch --env-file-if-exists=.env.dev src/main.ts",
     "fix": "eslint . --fix && prettier --write .",
     "clean": "rimraf dist",
     "build": "npm run clean && tsc && tsc-alias --resolve-full-paths",

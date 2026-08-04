@@ -7,8 +7,8 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 const rootDir = resolve(__dirname, '..')
 const envExamplePath = join(rootDir, '.env.example')
-const envDevPath = join(rootDir, '.env.development')
-const envProdPath = join(rootDir, '.env.production')
+const envDevPath = join(rootDir, '.env.dev')
+const envProdPath = join(rootDir, '.env.prod')
 
 function createEnvFile(
   sourcePath: string,

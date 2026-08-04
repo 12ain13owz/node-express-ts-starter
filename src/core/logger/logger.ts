@@ -20,7 +20,7 @@ const extractMetadata = (info: Record<string, unknown>): Record<string, unknown>
 
 const consoleLogFormat = format.printf((info) => {
   const timestamp = formatTimestamp()
-  const level = formatLogLevel(info.level)
+  const level = formatLogLevel(info.level as LogLevel)
   const message = formatLogMessage(info.message)
 
   const metadata = extractMetadata(info)

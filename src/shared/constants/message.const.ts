@@ -7,6 +7,7 @@ export const SUCCESS = {
   },
   CONFIG: {
     load: (envFile: string) => `[Config] ✅ Loaded environment from: ${envFile}`,
+    missing: (envFile: string) => `[Config] ⚠️ Missing environment file: ${envFile}`,
   },
   UTIL: {
     create: (name: string) => `Created ${name} successfully`,

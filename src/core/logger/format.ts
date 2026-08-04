@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import type { DisplayLevel } from '@/shared/constants'
+import type { DisplayLevel, LogLevel } from '@/shared/constants'
 import { AnsiColors, LOG_LEVEL_COLORS } from '@/shared/constants'
 
 const applyColor = (text: unknown, color: AnsiColors): string => {
@@ -10,9 +10,9 @@ export const formatTimestamp = (): string => {
   return applyColor(`[${dayjs().format('HH:mm:ss.SSS')}]`, AnsiColors.OTHER)
 }
 
-export const formatLogLevel = (level: string): string => {
-  const normalizedLevel = level.toUpperCase()
-  const colorCode = LOG_LEVEL_COLORS[normalizedLevel as DisplayLevel] ?? AnsiColors.OTHER
+export const formatLogLevel = (level: LogLevel): string => {
+  const normalizedLevel = level.toUpperCase() as DisplayLevel
+  const colorCode: AnsiColors = LOG_LEVEL_COLORS.get(normalizedLevel) ?? AnsiColors.OTHER
   return applyColor(normalizedLevel.padEnd(5), colorCode)
 }
 

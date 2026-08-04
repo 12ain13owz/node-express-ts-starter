@@ -20,10 +20,11 @@ export class AppError extends Error {
       url: req.originalUrl,
     }
 
-    if (req.params && Object.keys(req.params).length > 0) {
+    if (Object.keys(req.params).length > 0) {
       endpoint.params = { ...req.params }
     }
-    if (req.query && Object.keys(req.query).length > 0) {
+
+    if (Object.keys(req.query).length > 0) {
       endpoint.query = { ...req.query }
     }
 

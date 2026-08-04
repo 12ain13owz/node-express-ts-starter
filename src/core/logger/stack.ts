@@ -36,7 +36,7 @@ const parseStackFrame = (line: string): StackFrame | null => {
   const { fn, file, line: lineNumber, column } = match.groups
 
   return {
-    function: fn ?? '<anonymous>',
+    function: fn,
     file: toRelativePath(file),
     line: Number(lineNumber),
     column: Number(column),
