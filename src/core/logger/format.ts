@@ -6,16 +6,6 @@ const applyColor = (text: unknown, color: AnsiColors): string => {
   return `\x1b[${color}m${String(text)}\x1b[0m`
 }
 
-export const formatTimestamp = (): string => {
-  return applyColor(`[${dayjs().format('HH:mm:ss.SSS')}]`, AnsiColors.OTHER)
-}
-
-export const formatLogLevel = (level: LogLevel): string => {
-  const normalizedLevel = level.toUpperCase() as DisplayLevel
-  const colorCode: AnsiColors = LOG_LEVEL_COLORS.get(normalizedLevel) ?? AnsiColors.OTHER
-  return applyColor(normalizedLevel.padEnd(5), colorCode)
-}
-
 const formatPrimitiveValue = (value: unknown): string => {
   if (value === null) {
     return applyColor('null', AnsiColors.NULL)
@@ -85,6 +75,16 @@ const formatObjectValue = (obj: Record<string, unknown>, indentLevel: number = 0
   })
 
   return `{\n${formattedEntries.join(',\n')}\n${indent}}`
+}
+
+export const formatTimestamp = (): string => {
+  return applyColor(`[${dayjs().format('HH:mm:ss.SSS')}]`, AnsiColors.OTHER)
+}
+
+export const formatLogLevel = (level: LogLevel): string => {
+  const normalizedLevel = level.toUpperCase() as DisplayLevel
+  const colorCode: AnsiColors = LOG_LEVEL_COLORS.get(normalizedLevel) ?? AnsiColors.OTHER
+  return applyColor(normalizedLevel.padEnd(5), colorCode)
 }
 
 export const formatValue = (value: unknown, indentLevel: number = 0): string => {

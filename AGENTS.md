@@ -79,7 +79,7 @@ features  ->  shared
 ### File naming (kebab-case + role suffix)
 
 | Role             | Pattern                   | Example                       |
-| ---------------- | ------------------------- | ------------------------------ |
+| ---------------- | ------------------------- | ----------------------------- |
 | Routes           | `<feature>.routes.ts`     | `auth.routes.ts`              |
 | Controller       | `<feature>.controller.ts` | `auth.controller.ts`          |
 | Service          | `<feature>.service.ts`    | `auth.service.ts`             |
@@ -93,14 +93,14 @@ Skip files you genuinely don't need — e.g. `src/features/health/` only has `he
 
 ### Config (`src/core/config/`)
 
-| File                            | Responsibility                                                          |
-| -------------------------------- | ------------------------------------------------------------------------ |
-| `env/env.type.ts`                | `EnvConfig` type — hand-authored, no side effects                        |
-| `env/env.schema.ts`              | Zod schema typed as `z.ZodType<EnvConfig>`, so schema and type can't drift |
-| `env/env.ts`                     | Resolves the right `.env.*` file, validates via `envSchema`, exports `env` |
-| `env/index.ts`                   | Barrel — re-exports `env` + `EnvConfig`                                  |
-| `options.ts`                     | Env-dependent middleware options (cors/helmet/rate-limit)                |
-| `index.ts`                       | Barrel — import `env` and options from here                              |
+| File                | Responsibility                                                             |
+| ------------------- | -------------------------------------------------------------------------- |
+| `env/env.type.ts`   | `EnvConfig` type — hand-authored, no side effects                          |
+| `env/env.schema.ts` | Zod schema typed as `z.ZodType<EnvConfig>`, so schema and type can't drift |
+| `env/env.ts`        | Resolves the right `.env.*` file, validates via `envSchema`, exports `env` |
+| `env/index.ts`      | Barrel — re-exports `env` + `EnvConfig`                                    |
+| `options.ts`        | Env-dependent middleware options (cors/helmet/rate-limit)                  |
+| `index.ts`          | Barrel — import `env` and options from here                                |
 
 Import `env` from `@/core/config`, never from `./env/env`. Add env-dependent middleware options to `options.ts`, not `shared/`. Numeric env vars use `z.coerce.number()` (not `.transform(Number)`, which silently lets `NaN` through) with explicit bounds (`.int().positive()`, `.max(...)` where a natural ceiling exists).
 
@@ -276,7 +276,7 @@ Use [Conventional Commits](https://www.conventionalcommits.org/) with a bullet-l
 ```
 
 | Type       | Use for                         |
-| ---------- | -------------------------------- |
+| ---------- | ------------------------------- |
 | `feat`     | New user-facing behavior        |
 | `fix`      | Bug fix                         |
 | `refactor` | Code change, no behavior change |

@@ -9,8 +9,10 @@
     "dev": "tsx --watch --env-file-if-exists=.env.dev src/main.ts",
     "fix": "eslint . --fix && prettier --write .",
     "clean": "rimraf dist",
-    "build": "npm run clean && tsc && tsc-alias --resolve-full-paths",
-    "setup-env": "tsx scripts/setup-env.ts"
+    "build": "npm run clean && tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json --resolve-full-paths",
+    "setup-env": "tsx scripts/setup-env.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "scripts-info": {
     "start": "Runs the compiled application in production mode using environment variables.",
@@ -49,6 +51,7 @@
     "@types/express": "^5.0.6",
     "@types/morgan": "^1.9.10",
     "@types/node": "^26.1.2",
+    "@types/supertest": "^7.2.1",
     "chalk": "^6.0.0",
     "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
@@ -59,10 +62,12 @@
     "globals": "^17.9.0",
     "prettier": "^3.9.6",
     "rimraf": "^6.1.3",
+    "supertest": "^7.2.2",
     "ts-node": "^10.9.2",
     "tsc-alias": "^1.9.1",
     "tsx": "^4.23.5",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.66.0"
+    "typescript-eslint": "^8.66.0",
+    "vitest": "^4.1.10"
   }
 }
