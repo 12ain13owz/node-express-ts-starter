@@ -17,9 +17,23 @@ Not wired up yet — add inside the existing structure when a consuming project 
 - **Custom middleware folder** — cors/helmet/rate-limit are plain option objects (`core/config/options.ts`) wired directly in `main.ts`, not middleware functions. There is no `core/middleware/` folder until a feature actually needs one (auth guard, request validation, ...).
 - **i18n / structured messages** — `AppError`/`createResponse` take a plain `string` message. Do not introduce a `{ key, message, params }` message shape or an i18n layer speculatively; that's a real requirement of specific downstream products, not a default this starter should carry.
 
-### Testing (deferred)
+### Testing
 
-There is no test runner wired up. **Do not add tests** during feature implementation unless the user explicitly asks or test infrastructure has already been added. When a runner is added, mirror the production layering (`features/<name>/` beside the code under test).
+Test runner: **Vitest** (`npm test` / `npm run test:watch`, config in `vitest.config.ts`).
+
+**Do not write tests while building or changing a feature. Write tests only when the developer explicitly asks for them** — e.g. "add tests for X". Don't infer this from context (a feature "looking done" is not a request). Writing tests against code the developer hasn't asked to lock down yet means rewriting them on every behavior change, which costs more tokens than writing them once, on request, against settled code.
+
+When tests are requested, follow this standard so output stays consistent across the codebase:
+
+- **Placement & naming** — `<name>.test.ts` beside the file under test (e.g. `error-logger.ts` -> `error-logger.test.ts`), mirroring the production layering. No separate `test/` or `__tests__/` folder.
+- **Structure** — one `describe` per exported function/class; one `it` per behavior. Name `it` blocks after the observable outcome ("returns undefined when stack has no frames"), not implementation steps or generic labels ("test 1", "works").
+- **Mocking** —
+  - Keep `vi.fn()` mocks as local typed variables and assert against those variables directly; don't read a mock back off a property whose declared type comes from an external interface (e.g. Express's `Response`) — that trips `@typescript-eslint/unbound-method` because the rule checks the declared type, not the runtime value.
+  - When partially mocking a module, use `vi.mock(path, async (importOriginal) => ({ ...await importOriginal<typeof X>(), overriddenExport: ... }))`, typing `X` via a top-level `import type * as X from 'path'` — never an inline `typeof import('path')` (banned by lint).
+- **Assertions** — prefer `toEqual`/`toMatchObject` for object shape, `toBe` for primitives. Avoid loosely-typed matchers like `expect.any(Array)` where they trigger `@typescript-eslint/no-unsafe-assignment`; assert the field(s) individually instead.
+- **Coverage priority** — cover branches, edge cases, and any bug uncovered while writing the test (document it with a test rather than silently fixing it, unless asked to fix). Skip near-zero-risk one-liners (trivial wrappers, pure re-exports) unless asked.
+- **Lint/type clean** — test files follow the same rules as production code (§3): no `any`, unused params prefixed `_`, etc. `npm run fix` and `npm run build` must both pass.
+- Run `npm test` before calling a change done whenever test files were touched (see §8).
 
 ## 2. Architecture & layering
 
@@ -251,9 +265,10 @@ There's no `core/middleware/` folder yet — the only middleware wired up today 
 ```bash
 npm run fix     # ESLint --fix + Prettier
 npm run build   # type-check + compile (must pass with no errors)
+npm test        # run whenever test files exist for the touched code (see §1 Testing)
 ```
 
-A change is complete only when both succeed and the new feature router is mounted in `src/routes.ts`.
+A change is complete only when these succeed and the new feature router is mounted in `src/routes.ts`.
 
 ## 9. Quick do / don't
 

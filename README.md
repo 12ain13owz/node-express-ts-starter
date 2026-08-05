@@ -73,6 +73,8 @@ SHUTDOWN_TIMEOUT_MS="10000"
 - `npm run fix`: auto-fix ESLint issues and format with Prettier
 - `npm run clean`: remove the `dist` directory
 - `npm run setup-env`: generate `.env.dev` and `.env.prod` from `.env.example`
+- `npm test`: run the test suite once (Vitest)
+- `npm run test:watch`: run the test suite in watch mode
 
 ## API Endpoints
 
@@ -111,6 +113,15 @@ http://localhost:3000/docs
 - Daily-rotated files organized by year/month
 - Log location: `logs/YYYY/MM`
 - Separate general (`.log`) and error (`.error.log`) files
+
+## Testing
+
+Tests run on [Vitest](https://vitest.dev/) and live next to the code they cover as `<name>.test.ts` (e.g. `src/core/error/app-error.test.ts`), mirroring the `src/` layout — no separate `test/` folder.
+
+```bash
+npm test          # run once
+npm run test:watch  # watch mode
+```
 
 ## Docker
 
