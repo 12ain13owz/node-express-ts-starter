@@ -20,7 +20,9 @@
     "fix": "Automatically fixes linting issues and formats code with Prettier.",
     "clean": "Removes the dist directory for a fresh build.",
     "build": "Compiles TypeScript to JavaScript and resolves path aliases.",
-    "setup-env": "Initializes .env.dev and .env.prod files from templates."
+    "setup-env": "Initializes .env.dev and .env.prod files from templates.",
+    "test": "Runs the test suite once (Vitest).",
+    "test:watch": "Runs the test suite in watch mode (Vitest)."
   },
   "keywords": [
     "nodejs",
