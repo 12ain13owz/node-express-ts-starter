@@ -9,6 +9,7 @@ const validEnv = {
   LOG_LEVEL_CONSOLE: 'info',
   LOG_LEVEL_FILE: 'info',
   LOG_LEVEL_ERROR_FILE: 'error',
+  SHUTDOWN_TIMEOUT_MS: '10000',
 }
 
 describe('envSchema', () => {
