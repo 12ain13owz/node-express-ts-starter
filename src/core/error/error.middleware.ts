@@ -23,7 +23,8 @@ export const errorHandler = async (
 
     const structured = ErrorLogger.log(normalized)
 
-    const status = normalized instanceof AppError ? normalized.status : HttpStatus.INTERNAL_SERVER_ERROR
+    const status =
+      normalized instanceof AppError ? normalized.status : HttpStatus.INTERNAL_SERVER_ERROR
     const message = normalized.message ? normalized.message : ERRORS.GENERIC.INTERNAL_SERVER_ERROR
 
     // Production: only message + timestamp reach the client.

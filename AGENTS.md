@@ -42,10 +42,10 @@ When tests are requested, follow this standard so output stays consistent across
 ```
 src/
   core/      # Infrastructure, app-wide. Knows nothing about specific features.
-    config/    # env loading + Zod validation, runtime options (cors/helmet/rate-limit)
-    error/     # AppError, error logger, error middleware
-    logger/    # Winston setup
-    server/    # bootstrap + graceful shutdown
+    config/  # env loading + Zod validation, runtime options (cors/helmet/rate-limit)
+    error/   # AppError, error logger, error middleware
+    logger/  # Winston setup
+    server/  # bootstrap + graceful shutdown
   features/  # Business features. One folder per feature. May import core + shared.
   shared/    # Pure building blocks (constants, types, utils). No feature/business logic.
   main.ts    # Entry point: middleware wiring + startServer
@@ -119,11 +119,13 @@ features  ->  shared
 | Service          | `<feature>.service.ts`    | `auth.service.ts`             |
 | Validation (Zod) | `<feature>.schema.ts`     | `auth.schema.ts`              |
 | Types            | `<feature>.type.ts`       | `auth.type.ts`                |
-| Middleware       | `<name>.middleware.ts`    | `authenticate.middleware.ts`  |
+| Middleware       | `<name>.ts`               | `authenticate.ts`             |
 | Constants        | `<name>.const.ts`         | `message.const.ts`            |
 | Barrel           | `index.ts`                | re-exports the public surface |
 
 Skip files you genuinely don't need — e.g. `src/features/health/` only has `health.routes.ts` + `health.controller.ts` (no service, no schema) because there's nothing to validate or delegate. Keep the naming when you do add a file.
+
+Middleware is the one exception to the role-suffix rule: files under `src/core/middleware/` skip the `.middleware.ts` suffix — the folder itself already says "middleware", so the suffix would be redundant. Feature-local middleware, if a feature ever needs its own, follows the same no-suffix rule.
 
 **Messages:** generic, reusable text (CRUD success/fail wording, HTTP-generic errors) belongs in `SUCCESS`/`ERRORS` in `shared/constants/message.const.ts` — extend it, don't duplicate. A feature may keep its own `<feature>.const.ts` (e.g. `auth.const.ts`) only for messages specific to that feature's domain (e.g. "Invalid email or password") that wouldn't make sense reused elsewhere. Default to the shared file when in doubt.
 
@@ -294,7 +296,7 @@ router.use('/auth', authRouter)
 
 There's no `core/middleware/` folder yet — the only middleware wired up today is third-party (`cors`, `helmet`, `express-rate-limit`, `morgan`), configured as plain options in `core/config/options.ts` and applied directly in `main.ts`. When a feature needs actual custom middleware (auth guard, request validation, etc.):
 
-- Cross-feature middleware goes in `src/core/middleware/`, one file per concern (`<name>.middleware.ts`), exported from its `index.ts`.
+- Cross-feature middleware goes in `src/core/middleware/`, one file per concern (`<name>.ts`, no `.middleware.ts` suffix — the folder already says that), exported from its `index.ts`.
 - Feature-specific middleware can live in the feature folder instead.
 - Wire global middleware in `main.ts`.
 
