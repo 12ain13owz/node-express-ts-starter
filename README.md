@@ -158,7 +158,7 @@ The image compiles TypeScript at build time and runs the compiled output (`npm s
 |  |  \- health/              # Health check (success + simulated error)
 |  |- shared/                 # Cross-cutting building blocks
 |  |  |- constants/           # HttpStatus, messages (SUCCESS/ERRORS/LOG), app constants
-|  |  |- types/               # Shared types + Express augmentation
+|  |  |- types/               # Shared types
 |  |  \- utils/               # Helpers (e.g. createResponse)
 |  |- main.ts                 # App entry point + middleware wiring
 |  \- routes.ts               # Root router (mounts every feature router)
