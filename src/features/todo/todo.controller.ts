@@ -9,7 +9,7 @@ export const createTodoController = (todoService: TodoService) => {
   const list = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const data: Todo[] = await todoService.list()
-      const response = createResponse(SUCCESS.UTIL.list('todo'), data)
+      const response = createResponse(SUCCESS.list('todo'), data)
       res.status(HttpStatus.OK).json(response)
     } catch (error) {
       next(error)
@@ -23,7 +23,7 @@ export const createTodoController = (todoService: TodoService) => {
   ): Promise<void> => {
     try {
       const data: Todo = await todoService.getById(req.params.id)
-      const response = createResponse(SUCCESS.GENERIC.OK, data)
+      const response = createResponse(SUCCESS.OK, data)
       res.status(HttpStatus.OK).json(response)
     } catch (error) {
       next(error)
@@ -37,7 +37,7 @@ export const createTodoController = (todoService: TodoService) => {
   ): Promise<void> => {
     try {
       const data: Todo = await todoService.create(req.body)
-      const response = createResponse(SUCCESS.UTIL.create('todo'), data)
+      const response = createResponse(SUCCESS.create('todo'), data)
       res.status(HttpStatus.CREATED).json(response)
     } catch (error) {
       next(error)
@@ -51,7 +51,7 @@ export const createTodoController = (todoService: TodoService) => {
   ): Promise<void> => {
     try {
       const data: Todo = await todoService.toggle(req.params.id)
-      const response = createResponse(SUCCESS.UTIL.update('todo'), data)
+      const response = createResponse(SUCCESS.update('todo'), data)
       res.status(HttpStatus.OK).json(response)
     } catch (error) {
       next(error)
@@ -65,7 +65,7 @@ export const createTodoController = (todoService: TodoService) => {
   ): Promise<void> => {
     try {
       await todoService.remove(req.params.id)
-      const response = createResponse(SUCCESS.UTIL.delete('todo'))
+      const response = createResponse(SUCCESS.delete('todo'))
       res.status(HttpStatus.OK).json(response)
     } catch (error) {
       next(error)

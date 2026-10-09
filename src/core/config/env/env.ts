@@ -31,7 +31,7 @@ const reportEnvFile = (envFile: string): void => {
     return
   }
 
-  throw new Error(ERRORS.UTIL.notFound(envFile))
+  throw new Error(ERRORS.notFound(envFile))
 }
 
 const validateEnv = (): EnvConfig => {

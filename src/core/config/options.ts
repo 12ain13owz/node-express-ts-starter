@@ -23,7 +23,7 @@ export const helmetOptions: HelmetOptions = {
 export const rateLimitOptions: Partial<RateLimitOptions> = {
   windowMs: 15 * 60 * 1000,
   max: env.NODE_ENV === AppEnv.PRODUCTION ? 1000 : 10_000,
-  message: ERRORS.GENERIC.TOO_MANY_REQUESTS,
+  message: ERRORS.TOO_MANY_REQUESTS,
   statusCode: HttpStatus.TOO_MANY_REQUESTS,
   standardHeaders: true,
   legacyHeaders: false,

@@ -3,13 +3,13 @@ import { ERRORS } from '@/shared/constants'
 
 const createBody = z.object({
   title: z
-    .string({ error: ERRORS.UTIL.requiredField('Title') })
+    .string({ error: ERRORS.requiredField('Title') })
     .trim()
-    .min(1, ERRORS.UTIL.requiredField('Title')),
+    .min(1, ERRORS.requiredField('Title')),
 })
 
 const idParams = z.object({
-  id: z.uuid({ error: ERRORS.UTIL.invalidField('todo id') }),
+  id: z.uuid({ error: ERRORS.invalidField('todo id') }),
 })
 
 export const todoSchema = {

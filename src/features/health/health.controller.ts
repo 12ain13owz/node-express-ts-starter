@@ -9,7 +9,7 @@ export const successController = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const response = createResponse(SUCCESS.GENERIC.OK)
+    const response = createResponse(SUCCESS.OK)
     res.status(HttpStatus.OK).json(response)
   } catch (error) {
     next(error)

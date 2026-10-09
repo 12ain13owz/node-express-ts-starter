@@ -41,7 +41,7 @@ describe('errorHandler', () => {
 
     expect(status).toHaveBeenCalledWith(HttpStatus.INTERNAL_SERVER_ERROR)
     expect(json).toHaveBeenCalledWith(
-      expect.objectContaining({ message: ERRORS.GENERIC.INTERNAL_SERVER_ERROR })
+      expect.objectContaining({ message: ERRORS.INTERNAL_SERVER_ERROR })
     )
   })
 

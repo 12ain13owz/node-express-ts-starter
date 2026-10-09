@@ -35,7 +35,7 @@ describe('wrapUnexpected', () => {
         { operation: 'login' }
       )
     ).rejects.toMatchObject({
-      message: ERRORS.GENERIC.INTERNAL_SERVER_ERROR,
+      message: ERRORS.INTERNAL_SERVER_ERROR,
       status: HttpStatus.INTERNAL_SERVER_ERROR,
       severity: ErrorSeverity.ERROR,
     })
@@ -51,7 +51,7 @@ describe('wrapUnexpected', () => {
         { operation: 'login' }
       )
     ).rejects.toMatchObject({
-      message: ERRORS.GENERIC.INTERNAL_SERVER_ERROR,
+      message: ERRORS.INTERNAL_SERVER_ERROR,
       status: HttpStatus.INTERNAL_SERVER_ERROR,
     })
   })

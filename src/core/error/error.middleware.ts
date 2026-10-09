@@ -18,14 +18,14 @@ export const errorHandler = async (
 ): Promise<void> => {
   try {
     const normalized = isJsonBodyError(error)
-      ? new AppError(ERRORS.GENERIC.INVALID_JSON_BODY, HttpStatus.BAD_REQUEST, ErrorSeverity.WARN)
+      ? new AppError(ERRORS.INVALID_JSON_BODY, HttpStatus.BAD_REQUEST, ErrorSeverity.WARN)
       : error
 
     const structured = ErrorLogger.log(normalized)
 
     const status =
       normalized instanceof AppError ? normalized.status : HttpStatus.INTERNAL_SERVER_ERROR
-    const message = normalized.message ? normalized.message : ERRORS.GENERIC.INTERNAL_SERVER_ERROR
+    const message = normalized.message ? normalized.message : ERRORS.INTERNAL_SERVER_ERROR
 
     // Production: only message + timestamp reach the client.
     // Development: attach structured details (status, context, stack) for debugging.
@@ -46,7 +46,7 @@ export const errorHandler = async (
   } catch (error) {
     logger.error(error)
     const data = env.NODE_ENV === AppEnv.DEVELOPMENT ? error : undefined
-    const response = createResponse(ERRORS.GENERIC.INTERNAL_SERVER_ERROR, data)
+    const response = createResponse(ERRORS.INTERNAL_SERVER_ERROR, data)
 
     res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(response)
   }

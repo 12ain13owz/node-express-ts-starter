@@ -187,7 +187,7 @@ Skip files you genuinely don't need. For example, `src/features/health/` only ha
 
 Middleware is the one exception to the role-suffix rule: files under `src/core/middleware/` skip the `.middleware.ts` suffix — the folder itself already says "middleware", so the suffix would be redundant. Feature-local middleware, if a feature ever needs its own, follows the same no-suffix rule.
 
-**Messages:** generic, reusable text (CRUD success/fail wording, HTTP-generic errors) belongs in `SUCCESS`/`ERRORS` in `shared/constants/message.const.ts` — extend it, don't duplicate. A feature may keep its own `<feature>.const.ts` (e.g. `auth.const.ts`) only for messages specific to that feature's domain (e.g. "Invalid email or password") that wouldn't make sense reused elsewhere. Default to the shared file when in doubt.
+**Messages:** generic, reusable text (CRUD success/fail wording, HTTP-generic errors) belongs in `SUCCESS`/`ERRORS` in `shared/constants/message.const.ts` — extend it, don't duplicate. Both pools are **flat, two levels**: `UPPER_CASE` keys are fixed text (`ERRORS.UNAUTHORIZED`), `camelCase` keys are builders (`SUCCESS.create('todo')`, `ERRORS.notFound('Todo')`). Don't add a nested group to them. A feature keeps its own `<feature>.const.ts` exporting one `<FEATURE>_MESSAGE` object (e.g. `AUTH_MESSAGE.LOGIN` in `auth.const.ts`) for text specific to that feature's domain (e.g. "Invalid email or password") that wouldn't make sense reused elsewhere. That keeps the shared pools flat and the feature's text deleted along with the feature. Default to the shared pools when in doubt. `LOG` is the exception: it keeps a subsystem group (`LOG.CONFIG.load`) because the group says where the line comes from.
 
 ### Config (`src/core/config/`)
 
@@ -224,9 +224,7 @@ Import `env` from `@/core/config`, never from `./env/env`. Add env-dependent mid
 
   ```ts
   throw new NotFoundError('Todo', { id }).withOperation('getTodo')
-  throw new ConflictError(ERRORS.UTIL.alreadyExists('Todo title'), { title }).withOperation(
-    'createTodo'
-  )
+  throw new ConflictError(ERRORS.alreadyExists('Todo title'), { title }).withOperation('createTodo')
   ```
 
   They extend `AppError`, so builder methods, `errorHandler`, and logging work unchanged. If none fits, add a new class in `core/error/domain-error.ts` rather than reaching for `HttpStatus` in a service.
@@ -241,12 +239,12 @@ Import `env` from `@/core/config`, never from `./env/env`. Add env-dependent mid
   })
   ```
 
-- Malformed JSON request bodies never reach a controller — `express.json()` throws before routing, and the error isn't an `AppError`. `errorHandler` detects this case (`SyntaxError` with `.type === 'entity.parse.failed'`) and normalizes it to a `400` `AppError` (`ERRORS.GENERIC.INVALID_JSON_BODY`) instead of leaking the raw parser message and defaulting to `500`. Follow the same normalize-before-formatting approach for any other non-`AppError` exception that has a well-known client-facing meaning.
+- Malformed JSON request bodies never reach a controller — `express.json()` throws before routing, and the error isn't an `AppError`. `errorHandler` detects this case (`SyntaxError` with `.type === 'entity.parse.failed'`) and normalizes it to a `400` `AppError` (`ERRORS.INVALID_JSON_BODY`) instead of leaking the raw parser message and defaulting to `500`. Follow the same normalize-before-formatting approach for any other non-`AppError` exception that has a well-known client-facing meaning.
 
 `AppError` builder methods:
 
 ```ts
-throw new AppError(ERRORS.GENERIC.UNAUTHORIZED, HttpStatus.UNAUTHORIZED, ErrorSeverity.WARN)
+throw new AppError(ERRORS.UNAUTHORIZED, HttpStatus.UNAUTHORIZED, ErrorSeverity.WARN)
   .withOperation('login') // logical operation name
   .withEndpoint(req) // method, url, params, query, body
   .withMetadata({ email }) // extra structured context (no secrets/passwords)
@@ -292,7 +290,7 @@ export const createTodoController = (todoService: TodoService) => {
   ): Promise<void> => {
     try {
       const data: Todo = await todoService.create(req.body) // already validated by the route
-      const response = createResponse(SUCCESS.UTIL.create('todo'), data)
+      const response = createResponse(SUCCESS.create('todo'), data)
       res.status(HttpStatus.CREATED).json(response)
     } catch (error) {
       next(error)
@@ -391,7 +389,7 @@ export const createTodoService = ({ todoRepo }: TodoServiceDeps) => {
 
   const create = async (data: NewTodo): Promise<Todo> => {
     if (await todoRepo.findByTitle(data.title)) {
-      throw new ConflictError(ERRORS.UTIL.alreadyExists('Todo title'), {
+      throw new ConflictError(ERRORS.alreadyExists('Todo title'), {
         title: data.title,
       }).withOperation('createTodo')
     }
@@ -466,13 +464,13 @@ import { ERRORS } from '@/shared/constants'
 
 const createBody = z.object({
   title: z
-    .string({ error: ERRORS.UTIL.requiredField('Title') })
+    .string({ error: ERRORS.requiredField('Title') })
     .trim()
-    .min(1, ERRORS.UTIL.requiredField('Title')),
+    .min(1, ERRORS.requiredField('Title')),
 })
 
 const idParams = z.object({
-  id: z.uuid({ error: ERRORS.UTIL.invalidField('todo id') }),
+  id: z.uuid({ error: ERRORS.invalidField('todo id') }),
 })
 
 export const todoSchema = {
@@ -502,14 +500,13 @@ export const todoRouter = createTodoRouter(todoController)
 export type { Todo } from './todo.entity'
 ```
 
-9. **Add messages** to `src/shared/constants/message.const.ts` instead of inline strings. Reuse `SUCCESS.UTIL.*` / `ERRORS.UTIL.*` first; extend `SUCCESS`/`ERRORS` (API-facing) or `LOG` (console-only, see §4) only when nothing fits:
+9. **Add messages** instead of inline strings. Reuse `SUCCESS.*` / `ERRORS.*` (`@/shared/constants`) first; add a generic entry there only if other features could reuse it. Text that only makes sense for this feature goes in `<feature>.const.ts` (§3):
 
 ```ts
-export const SUCCESS = {
-  // ...existing...
-  AUTH: {
-    LOGIN: 'Logged in successfully',
-  },
+// auth.const.ts
+export const AUTH_MESSAGE = {
+  LOGIN: 'Logged in successfully',
+  INVALID_CREDENTIALS: 'Invalid email or password',
 }
 ```
 

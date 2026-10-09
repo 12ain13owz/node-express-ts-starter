@@ -20,7 +20,7 @@ export const createTodoService = ({ todoRepo }: TodoServiceDeps) => {
 
   const create = async (data: NewTodo): Promise<Todo> => {
     if (await todoRepo.findByTitle(data.title)) {
-      throw new ConflictError(ERRORS.UTIL.alreadyExists('Todo title'), {
+      throw new ConflictError(ERRORS.alreadyExists('Todo title'), {
         title: data.title,
       }).withOperation('createTodo')
     }

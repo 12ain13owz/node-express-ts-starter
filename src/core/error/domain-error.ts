@@ -8,7 +8,7 @@ const build = <T extends AppError>(error: T, metadata?: Meta): T =>
 
 export class NotFoundError extends AppError {
   constructor(resource: string, metadata?: Meta) {
-    super(ERRORS.UTIL.notFound(resource), HttpStatus.NOT_FOUND, ErrorSeverity.WARN)
+    super(ERRORS.notFound(resource), HttpStatus.NOT_FOUND, ErrorSeverity.WARN)
     build(this, metadata)
   }
 }

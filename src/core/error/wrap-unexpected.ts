@@ -26,7 +26,7 @@ const toCause = (error: unknown): Cause =>
  */
 export const wrapUnexpected = async <T>(
   fn: () => Promise<T>,
-  { operation, message = ERRORS.GENERIC.INTERNAL_SERVER_ERROR, metadata }: WrapOptions
+  { operation, message = ERRORS.INTERNAL_SERVER_ERROR, metadata }: WrapOptions
 ): Promise<T> => {
   try {
     return await fn()
