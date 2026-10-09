@@ -9,7 +9,7 @@ export const createTodoController = (todoService: TodoService) => {
   const list = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const data: Todo[] = await todoService.list()
-      const response = createResponse(SUCCESS.list('todo'), data)
+      const response = createResponse(SUCCESS.list('todos'), data)
       res.status(HttpStatus.OK).json(response)
     } catch (error) {
       next(error)
@@ -23,7 +23,7 @@ export const createTodoController = (todoService: TodoService) => {
   ): Promise<void> => {
     try {
       const data: Todo = await todoService.getById(req.params.id)
-      const response = createResponse(SUCCESS.OK, data)
+      const response = createResponse(SUCCESS.get('todo'), data)
       res.status(HttpStatus.OK).json(response)
     } catch (error) {
       next(error)

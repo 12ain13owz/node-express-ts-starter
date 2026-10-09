@@ -1,11 +1,14 @@
 import { z } from 'zod'
 import { ERRORS } from '@/shared/constants'
 
+const TITLE_MAX_LENGTH = 200
+
 const createBody = z.object({
   title: z
     .string({ error: ERRORS.requiredField('Title') })
     .trim()
-    .min(1, ERRORS.requiredField('Title')),
+    .min(1, ERRORS.requiredField('Title'))
+    .max(TITLE_MAX_LENGTH, ERRORS.maxLength('Title', TITLE_MAX_LENGTH)),
 })
 
 const idParams = z.object({

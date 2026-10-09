@@ -51,29 +51,31 @@ const businessLayerRestrictedPaths = [
   },
 ]
 
+// Project DB module + common Node DB clients/ORMs. Add your driver here if it's missing.
+const dbClientGroup = [
+  '@/core/database',
+  '@/core/database/**',
+  '@/generated',
+  '@/generated/**',
+  '@prisma/**',
+  'sequelize',
+  'sequelize/**',
+  'typeorm',
+  'typeorm/**',
+  'drizzle-orm',
+  'drizzle-orm/**',
+  'knex',
+  'mongoose',
+  'mongodb',
+  'mysql2',
+  'mysql2/**',
+  'pg',
+]
+
 const businessLayerRestrictedPatterns = [
   featureBoundary,
   {
-    // Project DB module + common Node DB clients/ORMs. Add your driver here if it's missing.
-    group: [
-      '@/core/database',
-      '@/core/database/**',
-      '@/generated',
-      '@/generated/**',
-      '@prisma/**',
-      'sequelize',
-      'sequelize/**',
-      'typeorm',
-      'typeorm/**',
-      'drizzle-orm',
-      'drizzle-orm/**',
-      'knex',
-      'mongoose',
-      'mongodb',
-      'mysql2',
-      'mysql2/**',
-      'pg',
-    ],
+    group: dbClientGroup,
     message:
       'Business logic must not depend on the DB. Depend on the repository port (<feature>.repository.ts) and implement it in <feature>.repository.<driver>.ts.',
   },
@@ -85,6 +87,28 @@ const businessLayerRestrictedPatterns = [
     group: ['@/shared/constants/http-status*'],
     message:
       'Business logic must not pick HTTP status codes. Throw a domain error (NotFoundError, ConflictError, …) from @/core/error.',
+  },
+]
+
+// Adapters (AGENTS.md §2): each side talks to its own outside world only.
+// Storage adapter (*.repository.<driver>.ts) never touches HTTP.
+const storageAdapterFiles = ['src/features/**/*.repository.*.ts']
+const storageAdapterRestrictedPaths = [
+  {
+    name: 'express',
+    message:
+      'A repository adapter talks to storage only. Keep Express in *.controller.ts / *.routes.ts.',
+  },
+]
+
+// HTTP adapter (controller / routes / schema) never touches the DB; it goes through the service.
+const httpAdapterFiles = ['src/features/**/*.{controller,routes,schema}.ts']
+const httpAdapterRestrictedPatterns = [
+  featureBoundary,
+  {
+    group: dbClientGroup,
+    message:
+      'The HTTP layer must not reach the DB directly. Call the service, which uses the repository port.',
   },
 ]
 
@@ -201,6 +225,25 @@ export default defineConfig(
         'error',
         { paths: businessLayerRestrictedPaths, patterns: businessLayerRestrictedPatterns },
       ],
+    },
+  },
+
+  // ── Clean Architecture: storage adapter (*.repository.<driver>.ts) — no Express ──
+  {
+    files: storageAdapterFiles,
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        { paths: storageAdapterRestrictedPaths, patterns: [featureBoundary] },
+      ],
+    },
+  },
+
+  // ── Clean Architecture: HTTP adapter (controller / routes / schema) — no DB client ──
+  {
+    files: httpAdapterFiles,
+    rules: {
+      'no-restricted-imports': ['error', { patterns: httpAdapterRestrictedPatterns }],
     },
   },
 

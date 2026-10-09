@@ -4,5 +4,6 @@ properties:
   title:
     type: string
     minLength: 1
+    maxLength: 200
     description: Leading/trailing whitespace is trimmed; a blank title is rejected with 422
     example: Buy milk

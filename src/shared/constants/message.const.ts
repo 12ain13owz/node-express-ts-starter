@@ -13,6 +13,7 @@ export const SUCCESS = {
   OK: 'Operation successful',
 
   list: (name: string) => `Listed ${name} successfully`,
+  get: (name: string) => `Fetched ${name} successfully`,
   create: (name: string) => `Created ${name} successfully`,
   update: (name: string) => `Updated ${name} successfully`,
   delete: (name: string) => `Deleted ${name} successfully`,
@@ -38,5 +39,6 @@ export const ERRORS = {
   invalidType: (field: string, type: string) => `${field} must be of type ${type}`,
   requiredField: (field: string) => `${field} is required`,
   minLength: (field: string, length: number) => `${field} must be at least ${length} characters`,
+  maxLength: (field: string, length: number) => `${field} must be at most ${length} characters`,
   failedAction: (action?: string, target?: string) => `Failed to ${action} ${target}`,
 }

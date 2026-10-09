@@ -93,7 +93,7 @@ features/todo/
 | `*.schema.ts`, `*.controller.ts`, `*.routes.ts` | Express, `HttpStatus`, `validate`, the service type                | DB clients                                                                                        |
 | `index.ts`                                      | everything in the feature                                          | —                                                                                                 |
 
-The business-layer column is **enforced by ESLint** (`no-restricted-imports` override for `src/features/**/*.{service,entity,repository}.ts` in `eslint.config.mjs`). If lint flags an import there, move the code to an adapter. Don't disable the rule. The DB-client list there covers common Node drivers/ORMs; if a project uses one that isn't listed, add it.
+The "Must NOT import" column is **enforced by ESLint** (`no-restricted-imports` overrides in `eslint.config.mjs`): the business layer (`*.{service,entity,repository}.ts`), storage adapters (`*.repository.*.ts`, no Express), and the HTTP layer (`*.{controller,routes,schema}.ts`, no DB client). If lint flags an import, move the code to the right layer. Don't disable the rule. The DB-client list there covers common Node drivers/ORMs; if a project uses one that isn't listed, add it.
 
 Rules of thumb:
 
@@ -524,11 +524,12 @@ router.use('/todos', todoRouter)
 
 ## 7. Middleware
 
-Third-party middleware (`cors`, `helmet`, `express-rate-limit`, `morgan`) is configured as plain options in `core/config/options.ts` and applied in `app.ts`. Custom middleware lives in `src/core/middleware/`:
+Third-party middleware (`cors`, `helmet`, `express-rate-limit`) is configured as plain options in `core/config/options.ts` and applied in `app.ts`. Custom middleware lives in `src/core/middleware/`:
 
-| File          | Export                     | Purpose                                                                                                                                                                                                                                                                                            |
-| ------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `validate.ts` | `validate(ValidatedShape)` | Parses `params` -> `query` -> `body` with the Zod schema given for each (all optional). On success it replaces that segment with the parsed data. On the first failure it calls `next()` with a `422` `AppError` that joins all issue messages, with `metadata.source` set to the failing segment. |
+| File                | Export                     | Purpose                                                                                                                                                                                                                                                                                            |
+| ------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `validate.ts`       | `validate(ValidatedShape)` | Parses `params` -> `query` -> `body` with the Zod schema given for each (all optional). On success it replaces that segment with the parsed data. On the first failure it calls `next()` with a `422` `AppError` that joins all issue messages, with `metadata.source` set to the failing segment. |
+| `request-logger.ts` | `requestLogger`            | `morgan` access log routed through the Winston `logger` at `http` level, so it follows the same transports, levels, and `LOG_SILENT` as every other log line.                                                                                                                                      |
 
 Adding more:
 

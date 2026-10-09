@@ -3,7 +3,7 @@ required: [message, timestamp, data]
 properties:
   message:
     type: string
-    example: Listed todo successfully
+    example: Listed todos successfully
   timestamp:
     type: string
     format: date-time
