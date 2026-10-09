@@ -1,4 +1,5 @@
 export * from './app-error'
+export * from './domain-error'
 export * from './error-logger'
 export * from './error.middleware'
 export * from './error.type'

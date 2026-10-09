@@ -25,6 +25,50 @@ const importOrderRule = [
   },
 ]
 
+// Shared by every `no-restricted-imports` config below. A later config object REPLACES the rule's
+// options instead of merging them, so each override must re-include this pattern.
+const featureBoundary = {
+  group: ['@/features/*/*'],
+  message:
+    'Import from another feature only via its public API (@/features/<name>), not internal paths.',
+}
+
+// Business layer of a feature (entity, repository port, service) must stay framework/DB-agnostic.
+// Adapters live in *.controller.ts / *.routes.ts (HTTP) and *.repository.<driver>.ts (DB).
+const businessLayerFiles = ['src/features/**/*.{service,entity,repository}.ts']
+
+const businessLayerRestrictedPaths = [
+  {
+    name: 'express',
+    message:
+      'Business logic must not depend on HTTP. Keep Express in *.controller.ts / *.routes.ts.',
+  },
+  {
+    name: '@/shared/constants',
+    importNames: ['HttpStatus'],
+    message:
+      'Business logic must not pick HTTP status codes. Throw a domain error (NotFoundError, ConflictError, …) from @/core/error.',
+  },
+]
+
+const businessLayerRestrictedPatterns = [
+  featureBoundary,
+  {
+    group: ['@/core/database', '@/core/database/*', '@/generated/*', '@prisma/*'],
+    message:
+      'Business logic must not depend on the DB. Depend on the repository port (<feature>.repository.ts) and implement it in <feature>.repository.<driver>.ts.',
+  },
+  {
+    group: ['@/core/middleware', '@/core/middleware/*'],
+    message: 'Middleware is HTTP plumbing. Wire it in *.routes.ts, not in business logic.',
+  },
+  {
+    group: ['@/shared/constants/http-status*'],
+    message:
+      'Business logic must not pick HTTP status codes. Throw a domain error (NotFoundError, ConflictError, …) from @/core/error.',
+  },
+]
+
 export default defineConfig(
   // ── Ignores ───────────────────────────────────────────────────────────────
   {
@@ -106,18 +150,7 @@ export default defineConfig(
       // Same-folder imports use `./foo`; anything crossing a folder boundary must use the `@/` alias
       'import/no-relative-parent-imports': 'error',
       // Cross-feature imports go through a feature's public `index.ts`, never its internals
-      'no-restricted-imports': [
-        'error',
-        {
-          patterns: [
-            {
-              group: ['@/features/*/*'],
-              message:
-                'Import from another feature only via its public API (@/features/<name>), not internal paths.',
-            },
-          ],
-        },
-      ],
+      'no-restricted-imports': ['error', { patterns: [featureBoundary] }],
 
       // ═══════════════════════════════════════════════════════════════════════
       // Opinionated — sensible defaults for this template, safe to tune per project.
@@ -137,6 +170,18 @@ export default defineConfig(
         { vars: 'all', varsIgnorePattern: '^_', args: 'after-used', argsIgnorePattern: '^_' },
       ],
       'import/order': importOrderRule,
+    },
+  },
+
+  // ── Clean Architecture: feature business layer (entity / repository port / service) ──
+  // No Express, no DB client, no HTTP status codes. Applies to type-only imports too.
+  {
+    files: businessLayerFiles,
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        { paths: businessLayerRestrictedPaths, patterns: businessLayerRestrictedPatterns },
+      ],
     },
   },
 
