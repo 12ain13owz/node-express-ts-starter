@@ -168,8 +168,6 @@ startServer(createApp(), env.PORT)
 
 | Role               | Pattern                            | Example                       |
 | ------------------ | ---------------------------------- | ----------------------------- |
-| Role               | Pattern                            | Example                       |
-| ------------------ | ---------------------------------- | ----------------------------- |
 | Routes             | `<feature>.routes.ts`              | `todo.routes.ts`              |
 | Controller         | `<feature>.controller.ts`          | `todo.controller.ts`          |
 | Service            | `<feature>.service.ts`             | `todo.service.ts`             |
