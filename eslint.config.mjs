@@ -54,7 +54,26 @@ const businessLayerRestrictedPaths = [
 const businessLayerRestrictedPatterns = [
   featureBoundary,
   {
-    group: ['@/core/database', '@/core/database/*', '@/generated/*', '@prisma/*'],
+    // Project DB module + common Node DB clients/ORMs. Add your driver here if it's missing.
+    group: [
+      '@/core/database',
+      '@/core/database/**',
+      '@/generated',
+      '@/generated/**',
+      '@prisma/**',
+      'sequelize',
+      'sequelize/**',
+      'typeorm',
+      'typeorm/**',
+      'drizzle-orm',
+      'drizzle-orm/**',
+      'knex',
+      'mongoose',
+      'mongodb',
+      'mysql2',
+      'mysql2/**',
+      'pg',
+    ],
     message:
       'Business logic must not depend on the DB. Depend on the repository port (<feature>.repository.ts) and implement it in <feature>.repository.<driver>.ts.',
   },

@@ -14,7 +14,7 @@ Folders are split **by feature**, and each feature is layered **Clean Architectu
 
 Not wired up yet — add inside the existing structure when a consuming project needs it, don't pre-build it speculatively:
 
-- **Database / ORM** — none. `todo` stores data with an in-memory adapter (`todo.repository.memory.ts`); a real project adds `<feature>.repository.<driver>.ts` and switches to it in the feature's `index.ts` (§2).
+- **Database / ORM** — none, and the starter doesn't pick one (SQL or Mongo, Prisma, Sequelize, TypeORM, a raw driver, …). `todo` stores data with an in-memory adapter (`todo.repository.memory.ts`); a real project adds `<feature>.repository.<driver>.ts` and switches to it in the feature's `index.ts` (§2, §6 step 5).
 - **Auth** — none (`req.user`, JWT, sessions, etc. don't exist).
 - **i18n / structured messages** — `AppError`/`createResponse` take a plain `string` message. Do not introduce a `{ key, message, params }` message shape or an i18n layer speculatively; that's a real requirement of specific downstream products, not a default this starter should carry.
 
@@ -78,29 +78,30 @@ features/todo/
   todo.entity.ts             # business  — domain types (plain TS)
   todo.repository.ts         # business  — port: interface the service needs from storage
   todo.service.ts            # business  — rules; createTodoService({ todoRepo })
-  todo.repository.memory.ts  # adapter   — implements the port (in-memory; later .prisma.ts etc.)
+  todo.repository.memory.ts  # adapter   — implements the port (in-memory; later .mysql.ts, .mongo.ts, …)
   todo.schema.ts             # adapter   — Zod input schemas for validate()
   todo.controller.ts         # adapter   — Express handlers; createTodoController(service)
   todo.routes.ts             # adapter   — createTodoRouter(controller)
   index.ts                   # composition root — picks the adapter, wires everything, exports todoRouter
 ```
 
-| File                                            | May import                                                         | Must NOT import                                                                                          |
-| ----------------------------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
-| `*.entity.ts`, `*.repository.ts` (port)         | other business files of the same feature, `@/shared`               | `express`, DB clients, `@/core/middleware`, `HttpStatus`                                                 |
-| `*.service.ts`                                  | entity, port, `@/core/error` (domain errors), `@/shared/constants` | `express`, DB clients (`@/core/database`, `@/generated`, `@prisma/*`), `@/core/middleware`, `HttpStatus` |
-| `*.repository.<driver>.ts` (adapter)            | entity, port, DB client, `wrapUnexpected`, domain errors           | `express`                                                                                                |
-| `*.schema.ts`, `*.controller.ts`, `*.routes.ts` | Express, `HttpStatus`, `validate`, the service type                | DB clients                                                                                               |
-| `index.ts`                                      | everything in the feature                                          | —                                                                                                        |
+| File                                            | May import                                                         | Must NOT import                                                                                   |
+| ----------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `*.entity.ts`, `*.repository.ts` (port)         | other business files of the same feature, `@/shared`               | `express`, DB clients, `@/core/middleware`, `HttpStatus`                                          |
+| `*.service.ts`                                  | entity, port, `@/core/error` (domain errors), `@/shared/constants` | `express`, DB clients (`@/core/database`, ORM/driver packages), `@/core/middleware`, `HttpStatus` |
+| `*.repository.<driver>.ts` (adapter)            | entity, port, DB client, `wrapUnexpected`                          | `express`                                                                                         |
+| `*.schema.ts`, `*.controller.ts`, `*.routes.ts` | Express, `HttpStatus`, `validate`, the service type                | DB clients                                                                                        |
+| `index.ts`                                      | everything in the feature                                          | —                                                                                                 |
 
-The business-layer column is **enforced by ESLint** (`no-restricted-imports` override for `src/features/**/*.{service,entity,repository}.ts` in `eslint.config.mjs`). If lint flags an import there, move the code to an adapter. Don't disable the rule.
+The business-layer column is **enforced by ESLint** (`no-restricted-imports` override for `src/features/**/*.{service,entity,repository}.ts` in `eslint.config.mjs`). If lint flags an import there, move the code to an adapter. Don't disable the rule. The DB-client list there covers common Node drivers/ORMs; if a project uses one that isn't listed, add it.
 
 Rules of thumb:
 
-- The service receives its dependencies as an object (`createXService({ xRepo })`) and never imports an adapter. Only `index.ts` decides which adapter is used. Swapping storage (memory -> Prisma) touches `index.ts` and adds one adapter file, nothing else.
-- Repository ports speak domain types (`Todo`, `NewTodo`), never ORM types. The adapter maps ORM rows to entities, so a field like `password` can be dropped there.
-- Ports return `null` for "not found" on reads. The **service** decides whether that is an error (`NotFoundError`).
+- The service receives its dependencies as an object (`createXService({ xRepo })`) and never imports an adapter. Only `index.ts` decides which adapter is used. Swapping storage (memory -> any DB) touches `index.ts` and adds one adapter file, nothing else.
+- Repository ports speak domain types (`Todo`, `NewTodo`), never ORM/driver types. The adapter maps rows/documents to entities, so a field like `password` can be dropped there.
+- Ports never throw for a missing record. Reads and updates return `null`, deletes return `false`. The adapter translates however its driver signals "not found" (a `null` result, an affected-row count of 0, a driver error code). The **service** is the only place that decides whether that is an error (`NotFoundError`). Keeping it in the port's return type makes the compiler force both sides to handle it.
 - Use factory functions with a deps object, not classes, so the style stays consistent with the rest of the codebase.
+- Naming: a factory is `create<Feature><Role>` (`createTodoService`, `createTodoController`), the instance it returns is `<feature><Role>` (`todoService`, `todoController`), and CRUD methods are single verbs (`create`, `getById`, `remove`). Factory and instance need different names, so keep the `create` prefix. Factories are only called in `index.ts` and tests. Everywhere else code works with the instance (`todoController.create`), the same way a module-style feature uses `countryController.update`.
 
 ### Graceful shutdown
 
@@ -142,8 +143,8 @@ startServer(createApp(), env.PORT)
 #### `null` vs `undefined`
 
 - Prefer `null` for a value _we_ deliberately return to mean "intentionally absent" in our own
-  domain logic — e.g. a lookup that found nothing, matching how Prisma itself already returns
-  `null` for nullable columns and missing records (`User | null`).
+  domain logic — e.g. a lookup that found nothing, matching how most DB clients/ORMs already
+  return `null` for nullable columns and missing records (`User | null`).
 - Keep `undefined` for optional parameters/properties (`foo?: string`) — that's the language's own
   idiom; don't fight it by requiring callers to pass `null` explicitly.
 - Keep `undefined` for values sourced from an external dependency/runtime API that already returns
@@ -352,7 +353,7 @@ export type NewTodo = Pick<Todo, 'title'>
 export type TodoChanges = Partial<Pick<Todo, 'title' | 'done'>>
 ```
 
-3. **Repository port** — `todo.repository.ts`. Only the operations the service needs, in domain types. Reads return `null` when nothing matches:
+3. **Repository port** — `todo.repository.ts`. Only the operations the service needs, in domain types. Never throws for a missing record: reads/updates return `null`, deletes return `false`:
 
 ```ts
 import type { NewTodo, Todo, TodoChanges } from './todo.entity'
@@ -361,7 +362,8 @@ export interface TodoRepository {
   findById(id: string): Promise<Todo | null>
   findByTitle(title: string): Promise<Todo | null>
   create(data: NewTodo): Promise<Todo>
-  update(id: string, changes: TodoChanges): Promise<Todo>
+  update(id: string, changes: TodoChanges): Promise<Todo | null>
+  delete(id: string): Promise<boolean>
   // ...
 }
 ```
@@ -396,22 +398,62 @@ export const createTodoService = ({ todoRepo }: TodoServiceDeps) => {
     return todoRepo.create(data)
   }
 
-  return { getById, create }
+  const remove = async (id: string): Promise<void> => {
+    if (!(await todoRepo.delete(id))) {
+      throw new NotFoundError('Todo', { id }).withOperation('removeTodo')
+    }
+  }
+
+  return { getById, create, remove }
 }
 
 export type TodoService = ReturnType<typeof createTodoService>
 ```
 
-5. **Repository adapter** — `todo.repository.<driver>.ts`. Implements the port. This is the only file that touches storage. With a real DB, wrap each call in `wrapUnexpected` (§4) and map ORM rows to entities:
+5. **Repository adapter** — `todo.repository.<driver>.ts`. Implements the port. This is the only file that touches storage, and the starter doesn't assume a driver. Every adapter, whatever the DB, does the same three things:
+   - wrap each call in `wrapUnexpected` (§4), so driver errors never reach the client;
+   - map rows/documents to entities (drop columns the domain doesn't need, convert `_id` -> `id`, …);
+   - translate the driver's "not found" signal into the port's `null`/`false`. Don't throw `NotFoundError` here; that's the service's call.
+
+   How common drivers signal "not found" (check your driver's docs for the version you use):
+
+   | Driver                   | Read miss              | Update miss                                         | Delete miss                         |
+   | ------------------------ | ---------------------- | --------------------------------------------------- | ----------------------------------- |
+   | Raw SQL (`mysql2`, `pg`) | no rows                | `affectedRows` / `rowCount` is `0`                  | same                                |
+   | Sequelize                | `findByPk` -> `null`   | `update` -> `[0]`                                   | `destroy` -> `0`                    |
+   | TypeORM                  | `findOneBy` -> `null`  | `update` -> `affected === 0`                        | `delete` -> `affected === 0`        |
+   | Mongoose                 | `findById` -> `null`   | `findByIdAndUpdate(id, x, { new: true })` -> `null` | `deleteOne` -> `deletedCount === 0` |
+   | Prisma                   | `findUnique` -> `null` | `update` throws `P2025` (catch it -> `null`)        | `deleteMany` -> `count === 0`       |
+
+   Abridged example with a raw SQL client (the starter itself ships only `.memory.ts`):
 
 ```ts
-// todo.repository.prisma.ts (shape for a consuming project; the starter ships .memory.ts)
-export const createPrismaTodoRepository = (db: PrismaClient): TodoRepository => ({
+// todo.repository.mysql.ts (illustrative)
+const toTodo = (row: TodoRow): Todo => ({
+  id: row.id,
+  title: row.title,
+  done: Boolean(row.done),
+  createdAt: row.created_at,
+})
+
+export const createMysqlTodoRepository = (pool: Pool): TodoRepository => ({
   findById: async (id) =>
-    wrapUnexpected(async () => db.todo.findUnique({ where: { id } }), {
-      operation: 'todoRepository.findById',
-      metadata: { id },
-    }),
+    wrapUnexpected(
+      async () => {
+        const [rows] = await pool.execute<TodoRow[]>('SELECT * FROM todos WHERE id = ?', [id])
+        return rows[0] ? toTodo(rows[0]) : null
+      },
+      { operation: 'todoRepository.findById', metadata: { id } }
+    ),
+
+  delete: async (id) =>
+    wrapUnexpected(
+      async () => {
+        const [result] = await pool.execute<ResultSetHeader>('DELETE FROM todos WHERE id = ?', [id])
+        return result.affectedRows > 0
+      },
+      { operation: 'todoRepository.delete', metadata: { id } }
+    ),
   // ...
 })
 ```
@@ -452,10 +494,11 @@ import { createMemoryTodoRepository } from './todo.repository.memory'
 import { createTodoRouter } from './todo.routes'
 import { createTodoService } from './todo.service'
 
-const todoRepo = createMemoryTodoRepository() // swap to createPrismaTodoRepository(prisma) later
+const todoRepo = createMemoryTodoRepository() // swap to e.g. createMysqlTodoRepository(pool) later
 const todoService = createTodoService({ todoRepo })
+const todoController = createTodoController(todoService)
 
-export const todoRouter = createTodoRouter(createTodoController(todoService))
+export const todoRouter = createTodoRouter(todoController)
 export type { Todo } from './todo.entity'
 ```
 
@@ -530,7 +573,8 @@ only complete once all four stages pass and the router is mounted in `src/routes
 - DO add new env vars to the Zod schema (`core/config/env/env.schema.ts`), the `EnvConfig` type (`core/config/env/env.type.ts`), and `.env.example`; use `z.coerce.number()` for numeric ones.
 - DON'T import across features, hardcode response strings, throw raw `Error`, use `any`, read `process.env` directly, or use `console.log`.
 - DON'T import Express, a DB client, or `HttpStatus` into `*.service.ts` / `*.entity.ts` / `*.repository.ts`, and don't `eslint-disable` the boundary rule to get around it (§2).
-- DON'T leak ORM types through a repository port; map rows to entities in the adapter.
+- DON'T leak ORM/driver types through a repository port; map rows to entities in the adapter.
+- DON'T throw `NotFoundError` from a repository adapter; return `null`/`false` and let the service decide (§2).
 - DON'T put secrets (passwords, tokens) into `AppError` metadata or logs.
 - DON'T add a database, auth, or i18n message keys speculatively — this is a starter; add them when a real feature needs them (see §1). `todo` is a reference feature. A consuming project may delete it once it has its own layered feature to copy from, and should point the `todo` references in this file at that feature in the same change.
 

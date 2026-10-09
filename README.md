@@ -113,7 +113,7 @@ Folders are split by feature (`src/features/<name>/`). Inside a feature, code is
 ```text
             HTTP adapter                      business layer                 storage adapter
  routes -> controller -> ------------> service -> repository (port) <------- repository.<driver>
- (validate)  (Express)                 (rules, domain errors)                (memory / prisma / …)
+ (validate)  (Express)                 (rules, domain errors)                (memory / mysql / mongo / …)
                                   index.ts wires them together and picks the adapter
 ```
 

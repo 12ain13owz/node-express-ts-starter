@@ -28,13 +28,19 @@ export const createTodoService = ({ todoRepo }: TodoServiceDeps) => {
   }
 
   const toggle = async (id: string): Promise<Todo> => {
-    const todo = await getById(id)
-    return todoRepo.update(id, { done: !todo.done })
+    const todo = await getById(id) // needs the current `done` to flip it
+    const updated = await todoRepo.update(id, { done: !todo.done })
+    if (!updated) {
+      // Deleted between the read and the write
+      throw new NotFoundError('Todo', { id }).withOperation('toggleTodo')
+    }
+    return updated
   }
 
   const remove = async (id: string): Promise<void> => {
-    await getById(id)
-    await todoRepo.delete(id)
+    if (!(await todoRepo.delete(id))) {
+      throw new NotFoundError('Todo', { id }).withOperation('removeTodo')
+    }
   }
 
   return { list, getById, create, toggle, remove }
