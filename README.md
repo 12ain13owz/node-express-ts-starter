@@ -180,6 +180,8 @@ docker compose --profile prod down
 
 The image compiles TypeScript at build time and runs the compiled output (`npm start`), with `NODE_ENV=production` by default. Run `npm run setup-env` first so `.env.prod` exists — `docker-compose.yml` loads it via `env_file` (it is not copied into the image).
 
+The service has a `healthcheck` that calls `GET /health` every 30s, so `docker ps` shows `(healthy)` / `(unhealthy)` and other services can wait on it with `depends_on: { nodejs: { condition: service_healthy } }`. Plain Compose only reports the status; it does **not** restart an unhealthy container (Swarm, Kubernetes, or a helper like autoheal does). If you change `PORT` in `.env.prod`, update the URL in the healthcheck too.
+
 ## Project Structure
 
 ```text
