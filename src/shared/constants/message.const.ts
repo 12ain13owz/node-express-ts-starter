@@ -1,9 +1,12 @@
-// Console-only strings — never sent in API responses.
+// Log-only strings (console bootstrap + Winston logger), grouped by subsystem — never sent in API responses.
 export const LOG = {
   CONFIG: {
     load: (envFile: string) => `[Config] ✅ Loaded environment from: ${envFile}`,
     missing: (envFile: string) => `[Config] ⚠️ Missing environment file: ${envFile}`,
     loadError: (envFile: string) => `[Config] ❌ Unexpected error loading ${envFile}:`,
+  },
+  SERVER: {
+    listening: (baseUrl: string) => `Server listening at ${baseUrl}`,
   },
 }
 

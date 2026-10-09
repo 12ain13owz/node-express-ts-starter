@@ -1,6 +1,6 @@
 import { env } from '@/core/config'
 import { logger } from '@/core/logger'
-import { APP_GENERIC } from '@/shared/constants'
+import { LOG } from '@/shared/constants'
 import type { Express } from 'express'
 import type { Server } from 'http'
 
@@ -9,7 +9,7 @@ let isShuttingDown = false
 
 export const startServer = (app: Express, port: number): void => {
   serverInstance = app.listen(port, () =>
-    logger.info(APP_GENERIC.serverListening(env.BASE_URL), { source: false })
+    logger.info(LOG.SERVER.listening(env.BASE_URL), { source: false })
   )
 
   process.on('unhandledRejection', handleFatalError)

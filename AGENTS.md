@@ -163,7 +163,7 @@ startServer(createApp(), env.PORT)
 - Never use `console.*` for app logging — use the Winston `logger` from `@/core/logger` (`console.info`/`warn`/`error` are only tolerated inside `core/config/env/env.ts`, for bootstrap messages that run before the logger/env are ready).
 - Never read `process.env` directly outside `core/config`. Import the validated `env` from `@/core/config`.
 - `LOG_SILENT=true` turns off every transport (console and both file transports; file transports aren't even created). It's for tests and one-off scripts. Never set it in `.env.prod`.
-- Console-only bootstrap strings live in the `LOG` constant (`@/shared/constants`), never in `SUCCESS`/`ERRORS` — those two are API-response message pools only. See §4.
+- Log-only strings (bootstrap `console.*` lines and Winston `logger` messages, never sent to a client) live in the `LOG` constant (`@/shared/constants`), grouped by subsystem (`LOG.CONFIG`, `LOG.SERVER`), never in `SUCCESS`/`ERRORS` — those two are API-response message pools only. See §4.
 
 ### File naming (kebab-case + role suffix)
 
@@ -211,7 +211,7 @@ Import `env` from `@/core/config`, never from `./env/env`. Add env-dependent mid
 ```
 
 - Response messages come from `SUCCESS`/`ERRORS` in `@/shared/constants`, or from a feature-local `<feature>.const.ts` for messages specific to that feature's domain (see §3) — never hardcoded inline strings. These are plain strings — no i18n key/message object (see §1).
-- Console-only strings (startup/config logs, never sent to a client) come from the separate `LOG` constant in the same file. Don't mix the two: if it's only ever passed to `console.*`, it belongs in `LOG`, not `SUCCESS`/`ERRORS`.
+- Log-only strings (startup/config/server logs, never sent to a client) come from the separate `LOG` constant in the same file. Don't mix the two: if it's only ever written to a log (`console.*` or `logger`), it belongs in `LOG`, not `SUCCESS`/`ERRORS`.
 - HTTP codes come from the `HttpStatus` enum, never magic numbers. Only adapters (controller, routes, middleware, `core/`) use it; the business layer can't (§2).
 - **In the business layer, throw a domain error** (`@/core/error`). It says _what_ went wrong, and `core/error` decides the HTTP status and severity once for the whole app:
 
@@ -567,7 +567,7 @@ only complete once all four stages pass and the router is mounted in `src/routes
 - DO use `createResponse` and the message constants.
 - DO validate input with `validate(<feature>Schema.<action>)` in the route, not `schema.parse()` in the controller.
 - DO wrap DB/SDK calls in `wrapUnexpected`, and register connection cleanup with `onShutdown`.
-- DO put console-only strings in `LOG`, not `SUCCESS`/`ERRORS` (see §4).
+- DO put log-only strings in `LOG`, not `SUCCESS`/`ERRORS` (see §4).
 - DO add new env vars to the Zod schema (`core/config/env/env.schema.ts`), the `EnvConfig` type (`core/config/env/env.type.ts`), and `.env.example`; use `z.coerce.number()` for numeric ones.
 - DON'T import across features, hardcode response strings, throw raw `Error`, use `any`, read `process.env` directly, or use `console.log`.
 - DON'T import Express, a DB client, or `HttpStatus` into `*.service.ts` / `*.entity.ts` / `*.repository.ts`, and don't `eslint-disable` the boundary rule to get around it (§2).
