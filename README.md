@@ -62,8 +62,11 @@ CORS_ORIGINS="http://localhost:3000,http://localhost:4000,http://localhost:4200"
 LOG_LEVEL_CONSOLE="debug"
 LOG_LEVEL_FILE="info"
 LOG_LEVEL_ERROR_FILE="error"
+LOG_SILENT="false"
 SHUTDOWN_TIMEOUT_MS="10000"
 ```
+
+`LOG_SILENT="true"` turns off every log transport (console and files, so no `logs/` folder is created). It defaults to `false`; `vitest.config.ts` sets it to `true` so test runs stay quiet.
 
 ## Available Scripts
 
@@ -71,6 +74,8 @@ SHUTDOWN_TIMEOUT_MS="10000"
 - `npm run build`: clean `dist`, compile TypeScript, then rewrite path aliases (`tsc-alias`)
 - `npm start`: run the compiled build using `.env.prod`
 - `npm run fix`: auto-fix ESLint issues and format with Prettier
+- `npm run lint`: check with ESLint without changing files
+- `npm run typecheck`: type-check with `tsc --noEmit`
 - `npm run clean`: remove the `dist` directory
 - `npm run setup-env`: generate `.env.dev` and `.env.prod` from `.env.example`
 - `npm test`: run the test suite once (Vitest)
@@ -113,6 +118,11 @@ http://localhost:3000/docs
 - Daily-rotated files organized by year/month
 - Log location: `logs/YYYY/MM`
 - Separate general (`.log`) and error (`.error.log`) files
+- Set `LOG_SILENT="true"` to turn off all logging (used by tests)
+
+## Continuous Integration
+
+`.github/workflows/ci.yml` runs on every pull request to `main`: `npm ci` -> `npm run lint` -> `npm run typecheck` -> `npm run setup-env` -> `npm test`. Run the same commands locally before opening a PR.
 
 ## Testing
 
@@ -125,16 +135,16 @@ npm run test:watch  # watch mode
 
 ## Docker
 
-Run with Docker Compose:
+The app service is behind the `prod` Compose profile, so a plain `docker compose up` won't start it. That leaves room to add dev-only services (database, mail catcher, …) that start without the app. Run it with:
 
 ```bash
-docker compose up -d --build
+docker compose --profile prod up -d --build
 ```
 
 Stop the container:
 
 ```bash
-docker compose down
+docker compose --profile prod down
 ```
 
 The image compiles TypeScript at build time and runs the compiled output (`npm start`), with `NODE_ENV=production` by default. Run `npm run setup-env` first so `.env.prod` exists — `docker-compose.yml` loads it via `env_file` (it is not copied into the image).
@@ -143,6 +153,7 @@ The image compiles TypeScript at build time and runs the compiled output (`npm s
 
 ```text
 .
+|- .github/workflows/ci.yml  # PR checks: lint, typecheck, test
 |- scripts/
 |  |- setup-env.ts
 |  \- tsconfig.json
@@ -150,17 +161,19 @@ The image compiles TypeScript at build time and runs the compiled output (`npm s
 |  |- core/                   # App infrastructure (not feature-specific)
 |  |  |- config/              # Env loading + Zod validation + runtime options (cors/helmet/rate-limit)
 |  |  |  \- env/              # EnvConfig type, Zod schema, loader, barrel
-|  |  |- error/               # AppError, error logger, error middleware
+|  |  |- error/               # AppError, error logger, error middleware, wrapUnexpected
 |  |  |- logger/              # Winston logger setup
-|  |  \- server/              # Server bootstrap + graceful shutdown
+|  |  |- middleware/          # Custom middleware (validate: Zod for params/query/body)
+|  |  \- server/              # Server bootstrap + graceful shutdown (onShutdown hooks)
 |  |- features/               # Feature modules (one folder per feature)
 |  |  |- docs/                # OpenAPI spec + Scalar API reference UI
 |  |  \- health/              # Health check (success + simulated error)
 |  |- shared/                 # Cross-cutting building blocks
 |  |  |- constants/           # HttpStatus, messages (SUCCESS/ERRORS/LOG), app constants
 |  |  |- types/               # Shared types
-|  |  \- utils/               # Helpers (e.g. createResponse)
-|  |- main.ts                 # App entry point + middleware wiring
+|  |  \- utils/               # Helpers (createResponse, asHandler, parseDuration)
+|  |- app.ts                  # createApp(): global middleware + routes + error handler
+|  |- main.ts                 # App entry point (startServer + onShutdown registrations)
 |  \- routes.ts               # Root router (mounts every feature router)
 |- docker-compose.yml
 |- Dockerfile
@@ -171,7 +184,7 @@ The image compiles TypeScript at build time and runs the compiled output (`npm s
 
 ## Contributing / Adding Features
 
-This project follows a strict, consistent structure. Before adding or changing a feature, read [`AGENTS.md`](./AGENTS.md) for the conventions and the feature-creation recipe (with an `auth/login` example). Always run `npm run fix` and `npm run build` before committing.
+This project follows a strict, consistent structure. Before adding or changing a feature, read [`AGENTS.md`](./AGENTS.md) for the conventions and the feature-creation recipe (with an `auth/login` example). Always run `npm run fix`, `npm run typecheck`, and `npm test` before committing (CI runs the same checks).
 
 ## License
 

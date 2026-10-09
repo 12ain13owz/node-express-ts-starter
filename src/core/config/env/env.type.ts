@@ -9,5 +9,6 @@ export type EnvConfig = {
   LOG_LEVEL_CONSOLE: LogLevel
   LOG_LEVEL_FILE: LogLevel
   LOG_LEVEL_ERROR_FILE: LogLevel
+  LOG_SILENT: boolean
   SHUTDOWN_TIMEOUT_MS: number
 }

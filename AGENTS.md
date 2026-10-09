@@ -14,7 +14,6 @@ Not wired up yet — add inside the existing structure when a consuming project 
 
 - **Database / ORM** — none.
 - **Auth** — none (`req.user`, JWT, sessions, etc. don't exist).
-- **Custom middleware folder** — cors/helmet/rate-limit are plain option objects (`core/config/options.ts`) wired directly in `main.ts`, not middleware functions. There is no `core/middleware/` folder until a feature actually needs one (auth guard, request validation, ...).
 - **i18n / structured messages** — `AppError`/`createResponse` take a plain `string` message. Do not introduce a `{ key, message, params }` message shape or an i18n layer speculatively; that's a real requirement of specific downstream products, not a default this starter should carry.
 
 ### Testing
@@ -34,7 +33,8 @@ When tests are requested, follow this standard so output stays consistent across
   - For a module that computes a value once at import time from `env` (e.g. a module-scope constant like `const isProduction = env.NODE_ENV === AppEnv.PRODUCTION`), a normal `vi.mock` on `@/core/config` can't flip that value per test — the constant is already baked in by the time any test runs. Instead, re-import the module fresh per scenario: `vi.resetModules()` + `vi.doMock('@/core/config', () => ({ env: {...} }))` + `await import('./the-module')`, called from a small helper so each test controls the `env` it loads against.
 - **Assertions** — prefer `toEqual`/`toMatchObject` for object shape, `toBe` for primitives. Avoid loosely-typed matchers like `expect.any(Array)` where they trigger `@typescript-eslint/no-unsafe-assignment`; assert the field(s) individually instead.
 - **Coverage priority** — cover branches, edge cases, and any bug uncovered while writing the test (document it with a test rather than silently fixing it, unless asked to fix). Skip near-zero-risk one-liners (trivial wrappers, pure re-exports) unless asked.
-- **Lint/type clean** — test files follow the same rules as production code (§3): no `any`, unused params prefixed `_`, etc. `npm run fix` and `npm run build` must both pass.
+- **Lint/type clean** — test files follow the same rules as production code (§3): no `any`, unused params prefixed `_`, etc. `npm run fix` and `npm run typecheck` must both pass.
+- **Quiet runs** — `vitest.config.ts` sets `LOG_SILENT=true`, so the logger writes nothing (no console noise, no `logs/` folder). Don't assert on log output via real transports; mock `@/core/logger` if a test needs to check what was logged.
 - Run `npm test` before calling a change done whenever test files were touched (see §8).
 
 ## 2. Architecture & layering
@@ -43,12 +43,14 @@ When tests are requested, follow this standard so output stays consistent across
 src/
   core/      # Infrastructure, app-wide. Knows nothing about specific features.
     config/  # env loading + Zod validation, runtime options (cors/helmet/rate-limit)
-    error/   # AppError, error logger, error middleware
-    logger/  # Winston setup
-    server/  # bootstrap + graceful shutdown
+    error/       # AppError, error logger, error middleware, wrapUnexpected
+    logger/      # Winston setup
+    middleware/  # custom Express middleware (validate)
+    server/      # bootstrap + graceful shutdown (onShutdown hooks)
   features/  # Business features. One folder per feature. May import core + shared.
   shared/    # Pure building blocks (constants, types, utils). No feature/business logic.
-  main.ts    # Entry point: middleware wiring + startServer
+  app.ts     # createApp(): global middleware + routes + errorHandler
+  main.ts    # Entry point: startServer (+ onShutdown registrations)
   routes.ts  # Root router: mounts every feature router
 ```
 
@@ -62,6 +64,19 @@ features  ->  shared
 - `shared/` must not import from `core/` or `features/`.
 - `core/` must not import from `features/`.
 - Features must not import from other features. If two features need the same logic, lift it into `core/` or `shared/`.
+
+### Graceful shutdown
+
+On `SIGTERM`/`SIGINT` or a fatal error, `core/server` closes the HTTP server and runs every registered cleanup at the same time, all under `SHUTDOWN_TIMEOUT_MS`. Anything that holds a connection (DB pool, queue, cache client) registers its own cleanup where it is created. Don't import it into `core/server`, because that would make core depend on a specific driver:
+
+```ts
+// main.ts
+import { onShutdown, startServer } from '@/core/server'
+
+await connectDatabase()
+onShutdown(disconnectDatabase) // () => Promise<void>; rejections are logged, never block exit
+startServer(createApp(), env.PORT)
+```
 
 ## 3. Hard conventions (do not deviate)
 
@@ -108,6 +123,7 @@ features  ->  shared
 
 - Never use `console.*` for app logging — use the Winston `logger` from `@/core/logger` (`console.info`/`warn`/`error` are only tolerated inside `core/config/env/env.ts`, for bootstrap messages that run before the logger/env are ready).
 - Never read `process.env` directly outside `core/config`. Import the validated `env` from `@/core/config`.
+- `LOG_SILENT=true` turns off every transport (console and both file transports; file transports aren't even created). It's for tests and one-off scripts. Never set it in `.env.prod`.
 - Console-only bootstrap strings live in the `LOG` constant (`@/shared/constants`), never in `SUCCESS`/`ERRORS` — those two are API-response message pools only. See §4.
 
 ### File naming (kebab-case + role suffix)
@@ -154,6 +170,15 @@ Import `env` from `@/core/config`, never from `./env/env`. Add env-dependent mid
 - Console-only strings (startup/config logs, never sent to a client) come from the separate `LOG` constant in the same file. Don't mix the two: if it's only ever passed to `console.*`, it belongs in `LOG`, not `SUCCESS`/`ERRORS`.
 - HTTP codes come from the `HttpStatus` enum, never magic numbers.
 - To raise an error, `throw new AppError(message, status, severity)` and chain context, then call `next(error)`. The global `errorHandler` (`core/error/error.middleware.ts`, wired in `app.ts`) formats it (full details in development, message-only in production).
+- Wrap every call into an external dependency (DB/ORM, third-party SDK, HTTP client) in `wrapUnexpected` (`@/core/error`). `errorHandler` hides `data` in production but still sends `message`, so a raw driver error (SQL text, hostnames, constraint names) would reach the client. `wrapUnexpected` rethrows any non-`AppError` as a generic `500` `AppError` and keeps the original as `metadata.cause` for the logs. An `AppError` thrown inside passes through unchanged:
+
+  ```ts
+  const user = await wrapUnexpected(async () => db.user.findUnique({ where: { email } }), {
+    operation: 'login',
+    metadata: { email },
+  })
+  ```
+
 - Malformed JSON request bodies never reach a controller — `express.json()` throws before routing, and the error isn't an `AppError`. `errorHandler` detects this case (`SyntaxError` with `.type === 'entity.parse.failed'`) and normalizes it to a `400` `AppError` (`ERRORS.GENERIC.INVALID_JSON_BODY`) instead of leaking the raw parser message and defaulting to `500`. Follow the same normalize-before-formatting approach for any other non-`AppError` exception that has a well-known client-facing meaning.
 
 `AppError` builder methods:
@@ -167,7 +192,9 @@ throw new AppError(ERRORS.GENERIC.UNAUTHORIZED, HttpStatus.UNAUTHORIZED, ErrorSe
 
 ## 5. Controller pattern (copy this shape)
 
-Controllers are thin: validate input, call a service, return via `createResponse`. Always `async`, return `Promise<void>`, wrap in `try/catch`, and forward errors with `next(error)`.
+Controllers are thin: read the already-validated input, call a service, return via `createResponse`. Always `async`, return `Promise<void>`, wrap in `try/catch`, and forward errors with `next(error)`.
+
+Input validation is **not** the controller's job. The route runs the `validate` middleware (§7) first. It parses `params`/`query`/`body` with Zod, replaces them with the parsed (coerced/trimmed) values, and turns failures into a `422` `AppError`. The controller types `req` with the schema's inferred types and uses the values directly.
 
 Reference implementation in this repo: `src/features/health/` (routes + controller only — a real CRUD feature would add `.service.ts` and `.schema.ts` too, as below).
 
@@ -189,15 +216,18 @@ import { HttpStatus, SUCCESS } from '@/shared/constants'
 import { createResponse } from '@/shared/utils'
 
 import * as authService from './auth.service'
-import { loginSchema } from './auth.schema'
 
+import type { LoginInput } from './auth.schema'
 import type { LoginData } from './auth.type'
 import type { NextFunction, Request, Response } from 'express'
 
-export const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const login = async (
+  req: Request<unknown, unknown, LoginInput>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
-    const credentials = loginSchema.parse(req.body)
-    const data: LoginData = await authService.login(credentials)
+    const data: LoginData = await authService.login(req.body) // already validated by the route
     const response = createResponse(SUCCESS.AUTH.LOGIN, data)
     res.status(HttpStatus.OK).json(response)
   } catch (error) {
@@ -206,19 +236,23 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
 }
 ```
 
-Routers create a `Router()` and export it as `<feature>Router`:
+Routers create a `Router()`, put `validate(...)` in front of any handler that reads input, and export the router as `<feature>Router`:
 
 ```ts
 import { Router } from 'express'
+import { validate } from '@/core/middleware'
 
 import * as authController from './auth.controller'
+import { authSchema } from './auth.schema'
 
 const router = Router()
 
-router.post('/login', authController.login)
+router.post('/login', validate(authSchema.login), authController.login)
 
 export const authRouter = router
 ```
+
+If TypeScript rejects a handler at registration because its `req` type is narrower than Express's `Request` (typically `req.user` guaranteed by an auth middleware, or a hand-written `Request` subtype), wrap it in `asHandler` (`@/shared/utils`), e.g. `router.get('/me', authenticate, asHandler(authController.me))`. Don't use it everywhere. Handlers typed with `Request<Params, unknown, Body, Query>` generics register without it.
 
 ## 6. Recipe — add a new feature (example: `auth` / login)
 
@@ -226,20 +260,25 @@ Follow these steps in order. Skip files you genuinely don't need (e.g. a read-on
 
 1. **Create the folder** `src/features/auth/`.
 
-2. **Validation** — `auth.schema.ts` (use Zod, the same validator already used for env):
+2. **Validation** — `auth.schema.ts` (use Zod, the same validator already used for env). Keep the individual Zod schemas private. Export one `<feature>Schema` object that groups them per route by request segment (`params`/`query`/`body`, the shape `validate` expects), and export the inferred input types for the controller:
 
 ```ts
 import { z } from 'zod'
+import { ERRORS } from '@/shared/constants'
 
-export const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
+const loginBody = z.object({
+  email: z.email({ error: ERRORS.UTIL.invalidField('email') }),
+  password: z.string().min(8, ERRORS.UTIL.minLength('Password', 8)),
 })
 
-export type LoginInput = z.infer<typeof loginSchema>
+export const authSchema = {
+  login: { body: loginBody },
+} as const
+
+export type LoginInput = z.infer<typeof loginBody>
 ```
 
-3. **Service** — `auth.service.ts`. Put business logic here, not in the controller. Throw `AppError` for expected failures:
+3. **Service** — `auth.service.ts`. Put business logic here, not in the controller. Throw `AppError` for expected failures, and wrap calls to external dependencies (DB, SDKs) in `wrapUnexpected` (§4):
 
 ```ts
 import { AppError } from '@/core/error'
@@ -260,7 +299,7 @@ export const login = async ({ email, password }: LoginInput) => {
 
 4. **Controller** — `auth.controller.ts` (see the pattern in section 5).
 
-5. **Routes** — `auth.routes.ts` (see section 5). Export `authRouter`.
+5. **Routes** — `auth.routes.ts` (see section 5): `validate(authSchema.<action>)` before each handler that reads input. Export `authRouter`.
 
 6. **Barrel** — `auth/index.ts`:
 
@@ -294,11 +333,17 @@ router.use('/auth', authRouter)
 
 ## 7. Middleware
 
-There's no `core/middleware/` folder yet — the only middleware wired up today is third-party (`cors`, `helmet`, `express-rate-limit`, `morgan`), configured as plain options in `core/config/options.ts` and applied directly in `main.ts`. When a feature needs actual custom middleware (auth guard, request validation, etc.):
+Third-party middleware (`cors`, `helmet`, `express-rate-limit`, `morgan`) is configured as plain options in `core/config/options.ts` and applied in `app.ts`. Custom middleware lives in `src/core/middleware/`:
 
-- Cross-feature middleware goes in `src/core/middleware/`, one file per concern (`<name>.ts`, no `.middleware.ts` suffix — the folder already says that), exported from its `index.ts`.
+| File          | Export                     | Purpose                                                                                                                                                                                                                                                                                            |
+| ------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `validate.ts` | `validate(ValidatedShape)` | Parses `params` -> `query` -> `body` with the Zod schema given for each (all optional). On success it replaces that segment with the parsed data. On the first failure it calls `next()` with a `422` `AppError` that joins all issue messages, with `metadata.source` set to the failing segment. |
+
+Adding more:
+
+- Cross-feature middleware (auth guard, role check, …) goes in `src/core/middleware/`, one file per concern (`<name>.ts`, no `.middleware.ts` suffix, since the folder already says that), exported from its `index.ts`. Put its types in `<name>.type.ts` beside it.
 - Feature-specific middleware can live in the feature folder instead.
-- Wire global middleware in `main.ts`.
+- Wire global middleware in `app.ts`; per-route middleware in the feature's `*.routes.ts`.
 
 ## 8. Definition of done
 
@@ -311,10 +356,12 @@ A feature moves through these stages, in order:
 4. Run:
 
 ```bash
-npm run fix     # ESLint --fix + Prettier
-npm run build   # type-check + compile (must pass with no errors)
-npm test        # run whenever test files exist for the touched code (see §1 Testing)
+npm run fix        # ESLint --fix + Prettier
+npm run typecheck  # tsc --noEmit (must pass with no errors)
+npm test           # run whenever test files exist for the touched code (see §1 Testing)
 ```
+
+CI (`.github/workflows/ci.yml`) runs `lint`, `typecheck`, and `test` on every PR to `main`, so a change that skips these locally will fail there.
 
 It's fine to land stage 1 as its own commit before stages 2–3 are finished — just don't
 call the feature "done" (or open it for review/PR) until docs + tests land. A feature is
@@ -324,11 +371,13 @@ only complete once all four stages pass and the router is mounted in `src/routes
 
 - DO keep controllers thin; push logic into services.
 - DO use `createResponse`, `HttpStatus`, `AppError`, and the message constants.
+- DO validate input with `validate(<feature>Schema.<action>)` in the route, not `schema.parse()` in the controller.
+- DO wrap DB/SDK calls in `wrapUnexpected`, and register connection cleanup with `onShutdown`.
 - DO put console-only strings in `LOG`, not `SUCCESS`/`ERRORS` (see §4).
 - DO add new env vars to the Zod schema (`core/config/env/env.schema.ts`), the `EnvConfig` type (`core/config/env/env.type.ts`), and `.env.example`; use `z.coerce.number()` for numeric ones.
 - DON'T import across features, hardcode response strings, throw raw `Error`, use `any`, read `process.env` directly, or use `console.log`.
 - DON'T put secrets (passwords, tokens) into `AppError` metadata or logs.
-- DON'T add a database, auth, i18n message keys, or a `core/middleware/` folder speculatively — this is a starter; add them when a real feature needs them (see §1).
+- DON'T add a database, auth, or i18n message keys speculatively — this is a starter; add them when a real feature needs them (see §1).
 
 ## 10. Commit messages
 

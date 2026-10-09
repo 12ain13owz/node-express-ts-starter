@@ -24,15 +24,19 @@ export const handleFatalError = (error: unknown): void => {
   shutdown(1)
 }
 
+type CleanupFn = () => Promise<void>
+const cleanups: CleanupFn[] = []
+
+/** Register a resource to close on shutdown (DB pool, queue, cache…). */
+export const onShutdown = (fn: CleanupFn): void => {
+  cleanups.push(fn)
+}
+
 export const shutdown = (exitCode = 0): void => {
   if (isShuttingDown) {
     return
   }
   isShuttingDown = true
-
-  if (!serverInstance) {
-    process.exit(exitCode)
-  }
 
   // Hard ceiling so a stuck connection can't block process exit past the orchestrator's grace period.
   const forceExit = setTimeout(() => {
@@ -41,7 +45,15 @@ export const shutdown = (exitCode = 0): void => {
   }, env.SHUTDOWN_TIMEOUT_MS)
   forceExit.unref()
 
-  serverInstance.close(() => {
+  const closeServer = async (): Promise<void> =>
+    new Promise((resolve) => (serverInstance ? serverInstance.close(() => resolve()) : resolve()))
+
+  void Promise.allSettled([closeServer(), ...cleanups.map(async (fn) => fn())]).then((results) => {
+    for (const result of results) {
+      if (result.status === 'rejected') {
+        logger.error(result.reason)
+      }
+    }
     clearTimeout(forceExit)
     process.exit(exitCode)
   })

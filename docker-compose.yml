@@ -1,5 +1,6 @@
 services:
   nodejs:
+    profiles: [prod]
     build:
       context: .
       dockerfile: Dockerfile
