@@ -15,8 +15,10 @@ export const startServer = (app: Express, port: number): void => {
   process.on('unhandledRejection', handleFatalError)
   process.on('uncaughtException', handleFatalError)
 
-  process.on('SIGTERM', shutdown)
-  process.on('SIGINT', shutdown)
+  // Wrap: Node passes the signal name ('SIGTERM') as the first argument, which would
+  // otherwise land in `exitCode` and make process.exit() throw ERR_INVALID_ARG_TYPE.
+  process.on('SIGTERM', () => shutdown())
+  process.on('SIGINT', () => shutdown())
 }
 
 export const handleFatalError = (error: unknown): void => {
