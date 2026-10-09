@@ -150,7 +150,7 @@ http://localhost:3000/docs
 
 ## Continuous Integration
 
-`.github/workflows/ci.yml` runs on every pull request to `main`: `npm ci` -> `npm run lint` -> `npm run typecheck` -> `npm run setup-env` -> `npm test`. Run the same commands locally before opening a PR.
+`.github/workflows/ci.yml` runs on every pull request to `main` and every push to `main`: `npm ci` -> `npm run lint` -> `npm run typecheck` -> `npm run setup-env` -> `npm test`. Run the same commands locally before opening a PR.
 
 ## Testing
 
@@ -191,7 +191,7 @@ The service has a `healthcheck` that calls `GET /health` every 30s, so `docker p
 
 ```text
 .
-|- .github/workflows/ci.yml  # PR checks: lint, typecheck, test
+|- .github/workflows/ci.yml  # CI on PRs + pushes to main: lint, typecheck, test
 |- scripts/
 |  |- setup-env.ts
 |  \- tsconfig.json
@@ -210,7 +210,7 @@ The service has a `healthcheck` that calls `GET /health` every 30s, so `docker p
 |  |- shared/                 # Cross-cutting building blocks
 |  |  |- constants/           # HttpStatus, messages (SUCCESS/ERRORS/LOG), app constants
 |  |  |- types/               # Shared types
-|  |  \- utils/               # Helpers (createResponse, asHandler, parseDuration)
+|  |  \- utils/               # Helpers (createResponse)
 |  |- app.ts                  # createApp(): global middleware + routes + error handler
 |  |- main.ts                 # App entry point (startServer + onShutdown registrations)
 |  \- routes.ts               # Root router (mounts every feature router)

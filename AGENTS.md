@@ -329,7 +329,7 @@ export const createTodoRouter = (todoController: TodoController): Router => {
 }
 ```
 
-If TypeScript rejects a handler at registration because its `req` type is narrower than Express's `Request` (typically `req.user` guaranteed by an auth middleware, or a hand-written `Request` subtype), wrap it in `asHandler` (`@/shared/utils`), e.g. `router.get('/me', authenticate, asHandler(authController.me))`. Don't use it everywhere. Handlers typed with `Request<Params, unknown, Body, Query>` generics register without it.
+Type handlers with `Request<Params, unknown, Body, Query>` generics from the schema's inferred types; Express accepts them at registration as-is.
 
 ## 6. Recipe — add a new feature (reference: `src/features/todo/`)
 
@@ -552,7 +552,7 @@ npm run typecheck  # tsc --noEmit (must pass with no errors)
 npm test           # run whenever test files exist for the touched code (see §1 Testing)
 ```
 
-CI (`.github/workflows/ci.yml`) runs `lint`, `typecheck`, and `test` on every PR to `main`, so a change that skips these locally will fail there.
+CI (`.github/workflows/ci.yml`) runs `lint`, `typecheck`, and `test` on every PR to `main` and every push to `main`, so a change that skips these locally will fail there.
 
 It's fine to land stage 1 as its own commit before stages 2–3 are finished — just don't
 call the feature "done" (or open it for review/PR) until docs + tests land. A feature is
