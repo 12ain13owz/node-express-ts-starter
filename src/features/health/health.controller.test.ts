@@ -18,13 +18,3 @@ describe('GET /health', () => {
     expect(body.timestamp).toBeDefined()
   })
 })
-
-describe('GET /health/error', () => {
-  it('goes through errorHandler and returns the AppError status', async () => {
-    const res = await request(app).get('/health/error')
-    const body = res.body as AppResponse<undefined>
-
-    expect(res.status).toBe(HttpStatus.BAD_REQUEST)
-    expect(body.message).toBe('Test error function')
-  })
-})

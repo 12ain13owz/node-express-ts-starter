@@ -83,8 +83,7 @@ SHUTDOWN_TIMEOUT_MS="10000"
 
 ## API Endpoints
 
-- `GET /health`: health check (success)
-- `GET /health/error`: health check that simulates an error
+- `GET /health`: health check (liveness probe for load balancers, orchestrators, and uptime monitors)
 - `GET /docs`: API documentation page
 - `/todos`: reference CRUD feature (in-memory, data resets on restart)
 
@@ -199,7 +198,7 @@ The image compiles TypeScript at build time and runs the compiled output (`npm s
 |  |  \- server/              # Server bootstrap + graceful shutdown (onShutdown hooks)
 |  |- features/               # Feature modules (one folder per feature)
 |  |  |- docs/                # OpenAPI spec + Scalar API reference UI
-|  |  |- health/              # Health check (success + simulated error)
+|  |  |- health/              # Health check (liveness probe)
 |  |  \- todo/                # Reference feature: entity, repository port + memory adapter, service, schema, controller, routes
 |  |- shared/                 # Cross-cutting building blocks
 |  |  |- constants/           # HttpStatus, messages (SUCCESS/ERRORS/LOG), app constants

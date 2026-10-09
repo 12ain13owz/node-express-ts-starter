@@ -16,8 +16,6 @@ tags:
 paths:
   /health:
     $ref: './paths/health/health.yaml'
-  /health/error:
-    $ref: './paths/health/error.yaml'
   /todos:
     $ref: './paths/todo/todos.yaml'
   /todos/{id}:
@@ -29,7 +27,7 @@ components:
   schemas:
     HealthResponse:
       $ref: './components/models/health.schema.yaml'
-    HealthErrorResponse:
+    Error:
       $ref: './components/models/error.schema.yaml'
     Todo:
       $ref: './components/models/todo.schema.yaml'

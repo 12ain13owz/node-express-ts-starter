@@ -3,12 +3,12 @@ properties:
   message:
     type: string
     description: A human-readable message describing the error
-    example: Test error function
+    example: Todo not found
   timestamp:
     type: string
     format: date-time
     description: The time when the error occurred in ISO 8601 format
-    example: 2025-05-29T07:28:04.886Z
+    example: 2026-01-01T00:00:00.000Z
   data:
     type: object
     description: Additional error details (only included in development mode)
@@ -17,16 +17,16 @@ properties:
       name:
         type: string
         description: The error class name
-        example: AppError
+        example: NotFoundError
       status:
         type: integer
         description: HTTP status code of the error
-        example: 400
+        example: 404
       severity:
         type: string
         description: The severity level of the error
         enum: [error, warn, info, http, verbose, debug]
-        example: error
+        example: warn
       context:
         type: object
         description: Contextual information about the error
@@ -34,7 +34,7 @@ properties:
           operation:
             type: string
             description: The name of the operation that caused the error
-            example: errorController
+            example: getTodo
             nullable: true
           endpoint:
             type: object
@@ -48,7 +48,7 @@ properties:
               url:
                 type: string
                 description: The URL of the request
-                example: /health/error
+                example: /todos/3f1c2a9e-8b4d-4c7a-9e21-5d6f7a8b9c0d
               body:
                 type: object
                 description: The request body (omitted when empty)
@@ -63,41 +63,11 @@ properties:
                 nullable: true
           metadata:
             type: object
-            description: Additional data attached to the error
+            description: Extra structured context attached by the code that raised the error
             nullable: true
-            properties:
-              userId:
-                type: integer
-                description: The ID of the user associated with the request
-                example: 1
-              name:
-                type: string
-                description: The name of the user
-                example: John Doe
-              active:
-                type: boolean
-                description: Whether the user is active
-                example: false
-              items:
-                type: array
-                description: A list of items associated with the error
-                items:
-                  anyOf:
-                    - type: string
-                    - type: number
-                    - type: boolean
-                    - type: 'null'
-                example: ['1', 2, true, null, null, '2025-05-29T07:28:04.886Z']
-              description:
-                type: string
-                description: Additional description of the error
-                nullable: true
-                example: null
-              createdAt:
-                type: string
-                format: date-time
-                description: The creation timestamp in ISO 8601 format
-                example: 2025-05-29T07:28:04.886Z
+            additionalProperties: true
+            example:
+              id: 3f1c2a9e-8b4d-4c7a-9e21-5d6f7a8b9c0d
       stack:
         type: array
         description: Parsed stack trace frames (most recent call first)
@@ -107,16 +77,16 @@ properties:
             function:
               type: string
               description: The function name at this frame
-              example: errorController
+              example: getById
             file:
               type: string
               description: The source file, relative to the project root
-              example: src/features/health/health.controller.ts
+              example: src/features/todo/todo.service.ts
             line:
               type: integer
               description: The line number in the source file
-              example: 26
+              example: 14
             column:
               type: integer
               description: The column number in the source file
-              example: 11
+              example: 13
