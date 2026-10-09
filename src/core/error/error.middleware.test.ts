@@ -45,6 +45,19 @@ describe('errorHandler', () => {
     )
   })
 
+  it('never sends a non-AppError message to the client in production', async () => {
+    env.NODE_ENV = AppEnv.PRODUCTION
+    const { res, status, json } = makeRes()
+    const error = new Error('connect ECONNREFUSED db.internal:5432 password=secret')
+
+    await errorHandler(error, {} as never, res, vi.fn())
+
+    expect(status).toHaveBeenCalledWith(HttpStatus.INTERNAL_SERVER_ERROR)
+    const [payload] = json.mock.calls[0] as [{ message: string; data?: unknown }]
+    expect(payload.message).toBe(ERRORS.INTERNAL_SERVER_ERROR)
+    expect(payload.data).toBeUndefined()
+  })
+
   it('attaches structured debug data in development', async () => {
     env.NODE_ENV = AppEnv.DEVELOPMENT
     const { res, json } = makeRes()
