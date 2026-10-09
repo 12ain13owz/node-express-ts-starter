@@ -178,7 +178,12 @@ Stop the container:
 docker compose --profile prod down
 ```
 
-The image compiles TypeScript at build time and runs the compiled output (`npm start`), with `NODE_ENV=production` by default. Run `npm run setup-env` first so `.env.prod` exists — `docker-compose.yml` loads it via `env_file` (it is not copied into the image).
+The image is a two-stage build on `node:<version>-slim` (Debian/glibc, so native modules install without compiling):
+
+- **Build stage** installs all dependencies and compiles TypeScript, so the running container never needs extra memory for `tsc` (useful on small/free plans).
+- **Runtime stage** contains only `dist/` and production dependencies, runs as the non-root `node` user, and starts with `node dist/main.js` directly (not `npm start`), so `SIGTERM` from `docker stop` or a redeploy reaches the app and graceful shutdown runs.
+
+`NODE_ENV=production` is the default. Run `npm run setup-env` first so `.env.prod` exists — `docker-compose.yml` loads it via `env_file`. It is never copied into the image; on a host like Render, set the variables in the dashboard instead (and point its health check at `/health`).
 
 The service has a `healthcheck` that calls `GET /health` every 30s, so `docker ps` shows `(healthy)` / `(unhealthy)` and other services can wait on it with `depends_on: { nodejs: { condition: service_healthy } }`. Plain Compose only reports the status; it does **not** restart an unhealthy container (Swarm, Kubernetes, or a helper like autoheal does). If you change `PORT` in `.env.prod`, update the URL in the healthcheck too.
 

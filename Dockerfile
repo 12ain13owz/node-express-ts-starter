@@ -1,32 +1,40 @@
-# Use Node.js as base image
-FROM node:24.19.0-alpine
+# Debian slim (glibc) rather than Alpine (musl): prebuilt native modules a project
+# may add later (bcrypt, sharp, ORM engines, …) work without compiling.
+# Pin the exact version so builds are reproducible; bump it deliberately.
 
-# Set working directory
+# ── Build stage: full deps + compile ──────────────────────────────────────────
+FROM node:24.20.0-slim AS build
 WORKDIR /app
 
-# Copy package.json and package-lock.json
 COPY package.json package-lock.json ./
-
-# Install dependencies (including devDependencies — needed for the build
-# step below; NODE_ENV=production isn't set yet, so npm ci installs them).
 RUN npm ci
 
-# Copy the rest of the application
 COPY . .
 
-# Compile TypeScript during image build (build stage has more memory available
-# than the running instance) — avoids OOM on small/free hosting plans at startup.
+# Compile during image build (build has more memory than the running instance)
+# so startup never runs tsc — avoids OOM on small/free hosting plans.
 RUN npm run build
 
-# Default to production so a plain `docker run` / `docker compose up` behaves
-# like a real deployment (e.g. Render) instead of dev/watch mode. Override
-# with `-e NODE_ENV=development` if you want dev behavior in a container.
-# Set after the build step so devDependencies (rimraf, typescript) were
-# available to `npm run build` above.
+# ── Runtime stage: compiled output + production deps only ────────────────────
+FROM node:24.20.0-slim
+WORKDIR /app
+
+# Default to production so a plain `docker run` / `docker compose up` behaves like
+# a real deployment (e.g. Render). Override with `-e NODE_ENV=development`.
 ENV NODE_ENV=production
 
-# Expose port 3000
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev && npm cache clean --force
+
+COPY --from=build /app/dist ./dist
+
+# Winston writes to ./logs; let the non-root user create files there.
+RUN mkdir logs && chown node:node logs
+USER node
+
 EXPOSE 3000
 
-# Command to run the application
-CMD ["npm", "start"]
+# Run node directly (not `npm start`) so SIGTERM reaches the app and graceful
+# shutdown + onShutdown hooks run. Env vars come from the platform (Render
+# dashboard, compose env_file), never from a file baked into the image.
+CMD ["node", "dist/main.js"]
