@@ -1,6 +1,6 @@
 # Node Starter (Express + TypeScript)
 
-A production-ready template for building REST APIs with Node.js, Express, and TypeScript. It ships with a clean, feature-based architecture, structured logging, centralized error handling, rate limiting, and ready-to-use OpenAPI documentation.
+A production-ready template for building REST APIs with Node.js, Express, and TypeScript. It ships with a feature-based structure that uses Clean Architecture inside each feature, structured logging, centralized error handling, rate limiting, and ready-to-use OpenAPI documentation.
 
 > Building a new feature with an AI assistant? Read [`AGENTS.md`](./AGENTS.md) first — it documents the conventions and provides a step-by-step recipe for adding features consistently.
 
@@ -9,7 +9,7 @@ A production-ready template for building REST APIs with Node.js, Express, and Ty
 - Node.js (ESM)
 - Express 5
 - TypeScript 6
-- Zod (environment validation)
+- Zod (environment + request validation)
 - Winston + winston-daily-rotate-file (logging)
 - ESLint 10 + Prettier
 - Scalar API Reference (OpenAPI docs UI)
@@ -86,6 +86,15 @@ SHUTDOWN_TIMEOUT_MS="10000"
 - `GET /health`: health check (success)
 - `GET /health/error`: health check that simulates an error
 - `GET /docs`: API documentation page
+- `/todos`: reference CRUD feature (in-memory, data resets on restart)
+
+| Method   | Path                | Success | Errors                               |
+| -------- | ------------------- | ------- | ------------------------------------ |
+| `GET`    | `/todos`            | 200     | —                                    |
+| `POST`   | `/todos`            | 201     | 409 duplicate title, 422 blank title |
+| `GET`    | `/todos/:id`        | 200     | 404 not found, 422 id is not a UUID  |
+| `PATCH`  | `/todos/:id/toggle` | 200     | 404 not found, 422 id is not a UUID  |
+| `DELETE` | `/todos/:id`        | 200     | 404 not found, 422 id is not a UUID  |
 
 The standard response envelope is:
 
@@ -96,6 +105,26 @@ The standard response envelope is:
   "data": {}
 }
 ```
+
+## Architecture
+
+Folders are split by feature (`src/features/<name>/`). Inside a feature, code is layered so business logic never depends on Express, the database, or HTTP status codes:
+
+```text
+            HTTP adapter                      business layer                 storage adapter
+ routes -> controller -> ------------> service -> repository (port) <------- repository.<driver>
+ (validate)  (Express)                 (rules, domain errors)                (memory / prisma / …)
+                                  index.ts wires them together and picks the adapter
+```
+
+- **Business layer**: `*.entity.ts`, `*.repository.ts` (interface), `*.service.ts`. Plain TypeScript. Services throw domain errors (`NotFoundError`, `ConflictError`, …) and `core/error` maps them to HTTP status codes.
+- **Adapters**: `*.controller.ts` / `*.routes.ts` / `*.schema.ts` for HTTP, `*.repository.<driver>.ts` for storage.
+- **Composition root**: the feature's `index.ts` is the only place that chooses an adapter. Switching from in-memory to a real database means adding one adapter file and changing one line there.
+- **Enforced by ESLint**: business-layer files can't import `express`, DB clients, `@/core/middleware`, or `HttpStatus` (see `eslint.config.mjs`).
+
+Because services only depend on an interface, their tests inject an in-memory repository instead of mocking modules.
+
+`src/features/todo/` is the reference implementation. See [`AGENTS.md`](./AGENTS.md) §2 and §6 for the full rules and the step-by-step recipe.
 
 ## API Documentation
 
@@ -127,6 +156,9 @@ http://localhost:3000/docs
 ## Testing
 
 Tests run on [Vitest](https://vitest.dev/) and live next to the code they cover as `<name>.test.ts` (e.g. `src/core/error/app-error.test.ts`), mirroring the `src/` layout — no separate `test/` folder.
+
+- Service tests inject a fresh in-memory repository per test, with no `vi.mock` (see `src/features/todo/todo.service.test.ts`).
+- HTTP tests use supertest against an isolated app per test (see `src/features/todo/todo.controller.test.ts`).
 
 ```bash
 npm test          # run once
@@ -161,13 +193,14 @@ The image compiles TypeScript at build time and runs the compiled output (`npm s
 |  |- core/                   # App infrastructure (not feature-specific)
 |  |  |- config/              # Env loading + Zod validation + runtime options (cors/helmet/rate-limit)
 |  |  |  \- env/              # EnvConfig type, Zod schema, loader, barrel
-|  |  |- error/               # AppError, error logger, error middleware, wrapUnexpected
+|  |  |- error/               # AppError, domain errors, error logger, error middleware, wrapUnexpected
 |  |  |- logger/              # Winston logger setup
 |  |  |- middleware/          # Custom middleware (validate: Zod for params/query/body)
 |  |  \- server/              # Server bootstrap + graceful shutdown (onShutdown hooks)
 |  |- features/               # Feature modules (one folder per feature)
 |  |  |- docs/                # OpenAPI spec + Scalar API reference UI
-|  |  \- health/              # Health check (success + simulated error)
+|  |  |- health/              # Health check (success + simulated error)
+|  |  \- todo/                # Reference feature: entity, repository port + memory adapter, service, schema, controller, routes
 |  |- shared/                 # Cross-cutting building blocks
 |  |  |- constants/           # HttpStatus, messages (SUCCESS/ERRORS/LOG), app constants
 |  |  |- types/               # Shared types
@@ -184,7 +217,7 @@ The image compiles TypeScript at build time and runs the compiled output (`npm s
 
 ## Contributing / Adding Features
 
-This project follows a strict, consistent structure. Before adding or changing a feature, read [`AGENTS.md`](./AGENTS.md) for the conventions and the feature-creation recipe (with an `auth/login` example). Always run `npm run fix`, `npm run typecheck`, and `npm test` before committing (CI runs the same checks).
+This project follows a strict, consistent structure. Before adding or changing a feature, read [`AGENTS.md`](./AGENTS.md) for the conventions and the feature-creation recipe (based on `src/features/todo/`). Always run `npm run fix`, `npm run typecheck`, and `npm test` before committing (CI runs the same checks).
 
 ## License
 
