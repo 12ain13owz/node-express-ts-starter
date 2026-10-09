@@ -38,11 +38,12 @@
   "author": "Dryst",
   "license": "MIT",
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   },
   "dependencies": {
     "@apidevtools/swagger-parser": "^12.1.0",
     "@scalar/express-api-reference": "^0.10.12",
+    "chalk": "^6.0.1",
     "cors": "^2.8.6",
     "dayjs": "^1.11.21",
     "express": "^5.2.1",
@@ -60,7 +61,6 @@
     "@types/morgan": "^1.9.10",
     "@types/node": "^26.1.2",
     "@types/supertest": "^7.2.1",
-    "chalk": "^6.0.0",
     "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import-x": "^4.17.1",

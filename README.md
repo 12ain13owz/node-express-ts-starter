@@ -17,7 +17,7 @@ A production-ready template for building REST APIs with Node.js, Express, and Ty
 
 ## Requirements
 
-- Node.js >= 20
+- Node.js >= 22
 - npm >= 10
 - Docker (optional)
 

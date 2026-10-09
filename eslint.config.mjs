@@ -143,7 +143,7 @@ export default defineConfig(
       // ── Node.js runtime ──────────────────────────────────────────────────────
       'n/no-deprecated-api': 'error', // catch use of deprecated Node.js APIs
       'n/no-extraneous-import': 'error', // imports must be declared in package.json
-      'n/no-unsupported-features/node-builtins': ['error', { version: '>=20.0.0' }], // match engines.node
+      'n/no-unsupported-features/node-builtins': ['error', { version: '>=22.0.0' }], // match engines.node
 
       // ── Security ─────────────────────────────────────────────────────────────
       'security/detect-object-injection': 'warn',
