@@ -232,9 +232,18 @@ Import `env` from `@/core/config`, never from `./env/env`. Add env-dependent mid
 - Outside the business layer (middleware, `core/`, a controller-only feature like `health`), `throw new AppError(message, status, severity)` directly and chain context. Either way, errors reach `next(error)` and the global `errorHandler` (`core/error/error.middleware.ts`, wired in `app.ts`) formats them (full details in development, message-only in production).
 - Wrap every call into an external dependency (DB/ORM, third-party SDK, HTTP client) in `wrapUnexpected(promise, operation, metadata?, message?)` (`@/core/error`). `errorHandler` already replaces any non-`AppError` message with a generic one, so this is about log context: `wrapUnexpected` rethrows any non-`AppError` as a generic `500` `AppError` tagged with `operation` + `metadata`, and keeps the original as `metadata.cause` for the logs. An `AppError` thrown inside passes through unchanged:
 
+  **Always split the query and the wrap into two statements**: build the call into a variable, then await it through `wrapUnexpected` on the next line. Line 1 = what runs, line 2 = how its failure is handled.
+
   ```ts
-  const user = await wrapUnexpected(db.user.findUnique({ where: { email } }), 'login', { email })
+  const query = pool.execute<TodoRow[]>('SELECT * FROM todos WHERE id = ?', [id])
+  const [rows] = await wrapUnexpected(query, 'todoRepository.findById', { id })
   ```
+
+  - **Keep the two lines adjacent.** Some clients are lazy (Prisma) but many start running on the call (mysql2, pg). An `await` in between could let the promise reject before anything handles it.
+  - **Naming:** one wrapped call in the function → `query`. More than one → `<resultName>Query` after the variable it resolves into (`existingQuery` -> `existing`), or `<verb><Entity>Query` when the result isn't kept or is destructured (`deleteTodoQuery`).
+  - **No result / direct return:** same shape, `await wrapUnexpected(query, ...)` or `return wrapUnexpected(query, ...)`.
+  - **Multi-step logic that isn't one call** (an SDK that returns `{ error }` instead of throwing): wrap it in an immediately-invoked `async` function named after the action, then wrap that.
+  - **`metadata` is the flat context object** (`{ id }`), not `{ metadata: { id } }`. No secrets.
 
 - Malformed JSON request bodies never reach a controller — `express.json()` throws before routing, and the error isn't an `AppError`. `errorHandler` detects this case (`SyntaxError` with `.type === 'entity.parse.failed'`) and normalizes it to a `400` `AppError` (`ERRORS.INVALID_JSON_BODY`) instead of leaking the raw parser message and defaulting to `500`. Follow the same normalize-before-formatting approach for any other non-`AppError` exception that has a well-known client-facing meaning.
 
@@ -433,20 +442,14 @@ const toTodo = (row: TodoRow): Todo => ({
 
 export const createMysqlTodoRepository = (pool: Pool): TodoRepository => ({
   findById: async (id) => {
-    const [rows] = await wrapUnexpected(
-      pool.execute<TodoRow[]>('SELECT * FROM todos WHERE id = ?', [id]),
-      'todoRepository.findById',
-      { id }
-    )
+    const query = pool.execute<TodoRow[]>('SELECT * FROM todos WHERE id = ?', [id])
+    const [rows] = await wrapUnexpected(query, 'todoRepository.findById', { id })
     return rows[0] ? toTodo(rows[0]) : null
   },
 
   delete: async (id) => {
-    const [result] = await wrapUnexpected(
-      pool.execute<ResultSetHeader>('DELETE FROM todos WHERE id = ?', [id]),
-      'todoRepository.delete',
-      { id }
-    )
+    const query = pool.execute<ResultSetHeader>('DELETE FROM todos WHERE id = ?', [id])
+    const [result] = await wrapUnexpected(query, 'todoRepository.delete', { id })
     return result.affectedRows > 0
   },
   // ...

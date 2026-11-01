@@ -6,7 +6,12 @@ import type { TodoRepository } from './todo.repository'
 // hands out live references either, so this keeps the adapter's behavior honest.
 const clone = (todo: Todo): Todo => ({ ...todo, createdAt: new Date(todo.createdAt) })
 
-/** In-memory adapter: no persistence, state lives as long as the process (or the test). */
+/**
+ * In-memory adapter: no persistence, state lives as long as the process (or the test).
+ * Nothing here can fail, so nothing is wrapped. A real driver adapter
+ * (`todo.repository.<driver>.ts`) wraps every driver call in `wrapUnexpected`;
+ * see AGENTS.md §6 step 5.
+ */
 export const createMemoryTodoRepository = (seed: Todo[] = []): TodoRepository => {
   const store = new Map(seed.map((todo) => [todo.id, clone(todo)]))
 
