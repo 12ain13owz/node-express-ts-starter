@@ -230,13 +230,10 @@ Import `env` from `@/core/config`, never from `./env/env`. Add env-dependent mid
   They extend `AppError`, so builder methods, `errorHandler`, and logging work unchanged. If none fits, add a new class in `core/error/domain-error.ts` rather than reaching for `HttpStatus` in a service.
 
 - Outside the business layer (middleware, `core/`, a controller-only feature like `health`), `throw new AppError(message, status, severity)` directly and chain context. Either way, errors reach `next(error)` and the global `errorHandler` (`core/error/error.middleware.ts`, wired in `app.ts`) formats them (full details in development, message-only in production).
-- Wrap every call into an external dependency (DB/ORM, third-party SDK, HTTP client) in `wrapUnexpected` (`@/core/error`). `errorHandler` hides `data` in production but still sends `message`, so a raw driver error (SQL text, hostnames, constraint names) would reach the client. `wrapUnexpected` rethrows any non-`AppError` as a generic `500` `AppError` and keeps the original as `metadata.cause` for the logs. An `AppError` thrown inside passes through unchanged:
+- Wrap every call into an external dependency (DB/ORM, third-party SDK, HTTP client) in `wrapUnexpected(promise, operation, metadata?, message?)` (`@/core/error`). `errorHandler` already replaces any non-`AppError` message with a generic one, so this is about log context: `wrapUnexpected` rethrows any non-`AppError` as a generic `500` `AppError` tagged with `operation` + `metadata`, and keeps the original as `metadata.cause` for the logs. An `AppError` thrown inside passes through unchanged:
 
   ```ts
-  const user = await wrapUnexpected(async () => db.user.findUnique({ where: { email } }), {
-    operation: 'login',
-    metadata: { email },
-  })
+  const user = await wrapUnexpected(db.user.findUnique({ where: { email } }), 'login', { email })
   ```
 
 - Malformed JSON request bodies never reach a controller — `express.json()` throws before routing, and the error isn't an `AppError`. `errorHandler` detects this case (`SyntaxError` with `.type === 'entity.parse.failed'`) and normalizes it to a `400` `AppError` (`ERRORS.INVALID_JSON_BODY`) instead of leaking the raw parser message and defaulting to `500`. Follow the same normalize-before-formatting approach for any other non-`AppError` exception that has a well-known client-facing meaning.
@@ -409,7 +406,7 @@ export type TodoService = ReturnType<typeof createTodoService>
 ```
 
 5. **Repository adapter** — `todo.repository.<driver>.ts`. Implements the port. This is the only file that touches storage, and the starter doesn't assume a driver. Every adapter, whatever the DB, does the same three things:
-   - wrap each call in `wrapUnexpected` (§4), so driver errors never reach the client;
+   - wrap each driver call in `wrapUnexpected` (§4), so a failure is logged with which operation broke;
    - map rows/documents to entities (drop columns the domain doesn't need, convert `_id` -> `id`, …);
    - translate the driver's "not found" signal into the port's `null`/`false`. Don't throw `NotFoundError` here; that's the service's call.
 
@@ -435,23 +432,23 @@ const toTodo = (row: TodoRow): Todo => ({
 })
 
 export const createMysqlTodoRepository = (pool: Pool): TodoRepository => ({
-  findById: async (id) =>
-    wrapUnexpected(
-      async () => {
-        const [rows] = await pool.execute<TodoRow[]>('SELECT * FROM todos WHERE id = ?', [id])
-        return rows[0] ? toTodo(rows[0]) : null
-      },
-      { operation: 'todoRepository.findById', metadata: { id } }
-    ),
+  findById: async (id) => {
+    const [rows] = await wrapUnexpected(
+      pool.execute<TodoRow[]>('SELECT * FROM todos WHERE id = ?', [id]),
+      'todoRepository.findById',
+      { id }
+    )
+    return rows[0] ? toTodo(rows[0]) : null
+  },
 
-  delete: async (id) =>
-    wrapUnexpected(
-      async () => {
-        const [result] = await pool.execute<ResultSetHeader>('DELETE FROM todos WHERE id = ?', [id])
-        return result.affectedRows > 0
-      },
-      { operation: 'todoRepository.delete', metadata: { id } }
-    ),
+  delete: async (id) => {
+    const [result] = await wrapUnexpected(
+      pool.execute<ResultSetHeader>('DELETE FROM todos WHERE id = ?', [id]),
+      'todoRepository.delete',
+      { id }
+    )
+    return result.affectedRows > 0
+  },
   // ...
 })
 ```
